@@ -3,5 +3,6 @@ dist/
 out/
 .vscode-test/
 .sandbox/
+test/.tmp/
 *.vsix
 .DS_Store

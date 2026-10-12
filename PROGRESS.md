@@ -5,7 +5,7 @@ The coding agent keeps this file up to date. Tick a milestone only when its "Don
 ## Milestones
 
 - [x] M1 Scaffold — F5 opens an Extension Development Host; the "Agent Sessions" log shows "activated"
-- [ ] M2 Model and store — per-file records, atomic writes, field-level merge, cross-window watcher
+- [x] M2 Model and store — per-file records, atomic writes, field-level merge, cross-window watcher
 - [ ] M3 Adapters — command-line matching (25+ cases) and session-file readers for claude, codex, pi
 - [ ] M4 Capture — terminal monitor, folder watcher, correlator; records appear within 5 s of the first prompt
 - [ ] M5 Restore — interrupted detection, startup prompt, Restore all, status bar item, `missing` handling
@@ -35,6 +35,17 @@ Sections of `docs/TESTING.md` the owner can run after each milestone:
 - Added `test/unit` (Vitest, 9 tests) and a `@vscode/test-electron` smoke suite under `test/integration` (cannot run here: no `code` CLI).
 - `npm run sandbox` is implemented (creates `.sandbox/`, launches `code` with fake-agent PATH and temp data roots); fake agents themselves arrive in M3.
 - Deviation from spec layout: added `scripts/sandbox.mjs`, `vitest.config.ts`, `test/integration/run.mjs` and `test/integration/suite/` (the spec named these areas but not the exact files).
+
+### M2 Model and store
+
+- `src/model/types.ts`: `AgentId`, `SessionStatus`, `SessionRecord`, `PendingLaunch`, `SessionFileInfo`, plus `sessionKey`, `isSessionRecord` and `mergeSessionRecords`.
+- `src/store/atomicWrite.ts`: write to a temp file in the same directory, `fsync`, then `rename` — a crash cannot leave a half-written record.
+- `src/store/lock.ts`: cross-process mutex built on atomic `mkdir`, with staleness recovery and a timeout.
+- `src/store/storageDir.ts`: the single `resolveStorageDir` from decision D3 (`AGENT_SESSIONS_STORAGE_DIR` → setting → `~/.agent-sessions`, with `~` expansion).
+- `src/store/SessionStore.ts`: one file per `agent/sessionId`; `upsert` (field-level merge, newer `updatedAt` wins), `update` (field patch applied to the freshest on-disk copy under the lock), `delete`, `loadFromDisk`/`reload`, `onDidChange`, and a recursive `fs.watch` with a non-recursive fallback.
+- `src/extension.ts` now resolves the storage dir, creates the store, logs `storage: <path>` and the record count, and disposes the store.
+- Tests (23 total): create/load/update/delete, merge-by-`updatedAt` with optional fields preserved, no leftover `.tmp` files, cross-window watcher upsert+delete, storage-dir precedence, and **two real child processes** racing to update different fields of one record — both survive.
+- Deviation: the spec's concurrency wording says "two concurrent writer processes"; the test bundles the store with esbuild on the fly and spawns two Node processes (`test/unit/helpers/updateField.ts`) to prove the lock works across processes, not just promises.
 
 ## Decisions
 
