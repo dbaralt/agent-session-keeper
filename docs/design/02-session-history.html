@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Session History page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#18191c}
+a{color:#7fb0ff}a:hover{color:#a9c9ff}
+button,input,select{font:inherit;color:inherit}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #1c1d21; color: #d9dade; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; line-height: 1.4">
+
+  <div style="height: 34px; flex: 0 0 34px; display: flex; align-items: center; justify-content: center; background: #18191c; border-bottom: 1px solid #2e3036; color: #9a9ca5; font-size: 12px">api — Visual Studio Code</div>
+
+  <div style="flex: 1 1 auto; display: flex; min-height: 0">
+    <nav aria-label="Activity bar" style="flex: 0 0 48px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 8px; background: #18191c; border-right: 1px solid #2e3036">
+      <button aria-label="Explorer" style="width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: #8a8d97; display: flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>
+      </button>
+      <button aria-label="Search" style="width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: #8a8d97; display: flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.5; stroke-linecap: round"><circle cx="11" cy="11" r="6"></circle><path d="M20 20l-4.5-4.5"></path></svg>
+      </button>
+      <button aria-label="Agent Sessions" style="width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: #d9dade; display: flex; align-items: center; justify-content: center">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 8v4l3 2"></path></svg>
+      </button>
+    </nav>
+
+    <main style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column">
+      <div style="height: 36px; flex: 0 0 36px; display: flex; align-items: stretch; background: #18191c; border-bottom: 1px solid #2e3036">
+        <div style="display: flex; align-items: center; padding: 0 16px; color: #8a8d97">auth.ts</div>
+        <div style="display: flex; align-items: center; gap: 8px; padding: 0 16px; background: #1c1d21; border-left: 1px solid #2e3036; border-right: 1px solid #2e3036; color: #f1f2f4">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 8v4l3 2"></path></svg>Session History
+        </div>
+      </div>
+
+      <div style="flex: 1 1 auto; overflow: auto; padding: 32px 40px 40px">
+        <div style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px">
+
+          <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap">
+            <div>
+              <h1 style="margin: 0; font-size: 24px; font-weight: 600; color: #f4f5f7; letter-spacing: -0.01em">Session History</h1>
+              <p style="margin: 6px 0 0; color: #9a9ca5">Every Claude Code, Codex and pi session started in a terminal. Saved in <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #c8cad0">~/.agent-sessions</span></p>
+            </div>
+            <div style="display: flex; gap: 8px">
+              <button style="height: 34px; padding: 0 14px; border: 1px solid #4a4d57; border-radius: 6px; background: #2a2c33; color: #f1f2f4; display: flex; align-items: center; gap: 8px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round"><path d="M12 5v14M5 12h14"></path></svg>New session
+              </button>
+              <button style="height: 34px; padding: 0 14px; border: 0; border-radius: 6px; background: #2F6FDB; color: #ffffff; font-weight: 500">Restore 3 interrupted</button>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+            <label style="flex: 1 1 280px; display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: 6px; background: #18191c; border: 1px solid #34363d; color: #8a8d97">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round"><circle cx="11" cy="11" r="6"></circle><path d="M20 20l-4.5-4.5"></path></svg>
+              <span class="sr-only">Search sessions</span>
+              <input type="text" placeholder="Search titles, folders, branches, session IDs" style="flex: 1; min-width: 0; border: 0; background: transparent; outline: none; color: #d9dade">
+            </label>
+            <div role="group" aria-label="Agent" style="display: flex; height: 34px; padding: 3px; box-sizing: border-box; border-radius: 6px; background: #18191c; border: 1px solid #34363d">
+              <button aria-pressed="true" style="padding: 0 12px; border: 0; border-radius: 4px; background: #33363e; color: #f1f2f4">All</button>
+              <button aria-pressed="false" style="padding: 0 12px; border: 0; border-radius: 4px; background: transparent; color: #b9bbc2">Claude Code</button>
+              <button aria-pressed="false" style="padding: 0 12px; border: 0; border-radius: 4px; background: transparent; color: #b9bbc2">Codex</button>
+              <button aria-pressed="false" style="padding: 0 12px; border: 0; border-radius: 4px; background: transparent; color: #b9bbc2">pi</button>
+            </div>
+            <label style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border-radius: 6px; background: #18191c; border: 1px solid #34363d; color: #9a9ca5">Status
+              <select style="border: 0; background: transparent; color: #f1f2f4; outline: none">
+                <option>Any</option><option>Interrupted</option><option>Running</option><option>Closed</option><option>Missing</option><option>Archived</option>
+              </select>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border-radius: 6px; background: #18191c; border: 1px solid #34363d; color: #9a9ca5">Workspace
+              <select style="border: 0; background: transparent; color: #f1f2f4; outline: none">
+                <option>api</option><option>All workspaces</option><option>web-dashboard</option><option>infra</option>
+              </select>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border-radius: 6px; background: #18191c; border: 1px solid #34363d; color: #9a9ca5">Active
+              <select style="border: 0; background: transparent; color: #f1f2f4; outline: none">
+                <option>Last 30 days</option><option>Last 7 days</option><option>Any time</option>
+              </select>
+            </label>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; border-radius: 8px; background: rgba(47,111,219,0.14); border: 1px solid rgba(110,168,254,0.35)">
+            <span style="color: #f1f2f4; font-weight: 500">2 selected</span>
+            <button style="height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: #2F6FDB; color: #ffffff; font-weight: 500">Resume selected</button>
+            <button style="height: 28px; padding: 0 12px; border: 1px solid #4a4d57; border-radius: 6px; background: transparent; color: #d9dade">Archive</button>
+            <button style="height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: #b9bbc2">Clear selection</button>
+          </div>
+
+          <div style="overflow-x: auto; border: 1px solid #2e3036; border-radius: 10px">
+            <table style="width: 100%; min-width: 1040px; border-collapse: collapse">
+              <thead>
+                <tr style="background: #212227; color: #9a9ca5; font-size: 11.5px; text-align: left">
+                  <th style="width: 40px; padding: 10px 0 10px 14px; font-weight: 500"><span class="sr-only">Select</span></th>
+                  <th style="padding: 10px 12px; font-weight: 500">Session</th>
+                  <th style="padding: 10px 12px; font-weight: 500">Agent</th>
+                  <th style="padding: 10px 12px; font-weight: 500">Folder</th>
+                  <th style="padding: 10px 12px; font-weight: 500">Branch</th>
+                  <th style="padding: 10px 12px; font-weight: 500">Started</th>
+                  <th style="padding: 10px 12px; font-weight: 500">Last active ↓</th>
+                  <th style="padding: 10px 12px; font-weight: 500">Status</th>
+                  <th style="padding: 10px 14px 10px 12px; font-weight: 500"><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-top: 1px solid #2e3036; background: rgba(47,111,219,0.08)">
+                  <td style="padding: 12px 0 12px 14px"><input type="checkbox" checked aria-label="Select Refactor auth middleware"></td>
+                  <td style="padding: 12px"><div style="color: #f1f2f4; font-weight: 500">Refactor auth middleware</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8a8d97">550e8400-e29b-41d4…</div></td>
+                  <td style="padding: 12px"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 16px; height: 16px; border-radius: 4px; background: #D97757; color: #1a1210; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">C</span>Claude Code</span></td>
+                  <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #c8cad0">~/code/api</td>
+                  <td style="padding: 12px; color: #c8cad0">feat/auth</td>
+                  <td style="padding: 12px; color: #b9bbc2">Today 10:02</td>
+                  <td style="padding: 12px; color: #b9bbc2">2h ago</td>
+                  <td style="padding: 12px"><span style="padding: 2px 8px; border-radius: 10px; background: rgba(227,164,71,0.16); color: #E3A447; font-size: 12px">Interrupted</span></td>
+                  <td style="padding: 12px 14px 12px 12px; text-align: right; white-space: nowrap"><button style="height: 28px; padding: 0 12px; border: 1px solid #4a4d57; border-radius: 6px; background: #2a2c33; color: #f1f2f4">Resume</button> <button aria-label="More actions" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #9a9ca5">⋯</button></td>
+                </tr>
+                <tr style="border-top: 1px solid #2e3036; background: rgba(47,111,219,0.08)">
+                  <td style="padding: 12px 0 12px 14px"><input type="checkbox" checked aria-label="Select Fix flaky payment webhook tests"></td>
+                  <td style="padding: 12px"><div style="color: #f1f2f4; font-weight: 500">Fix flaky payment webhook tests</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8a8d97">019dc8d9-3ff9-7f23…</div></td>
+                  <td style="padding: 12px"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 16px; height: 16px; border-radius: 4px; background: #3FA796; color: #08201c; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">X</span>Codex</span></td>
+                  <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #c8cad0">~/code/api</td>
+                  <td style="padding: 12px; color: #c8cad0">fix/webhooks</td>
+                  <td style="padding: 12px; color: #b9bbc2">Today 09:15</td>
+                  <td style="padding: 12px; color: #b9bbc2">3h ago</td>
+                  <td style="padding: 12px"><span style="padding: 2px 8px; border-radius: 10px; background: rgba(227,164,71,0.16); color: #E3A447; font-size: 12px">Interrupted</span></td>
+                  <td style="padding: 12px 14px 12px 12px; text-align: right; white-space: nowrap"><button style="height: 28px; padding: 0 12px; border: 1px solid #4a4d57; border-radius: 6px; background: #2a2c33; color: #f1f2f4">Resume</button> <button aria-label="More actions" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #9a9ca5">⋯</button></td>
+                </tr>
+                <tr style="border-top: 1px solid #2e3036">
+                  <td style="padding: 12px 0 12px 14px"><input type="checkbox" aria-label="Select Migrate config loader to zod"></td>
+                  <td style="padding: 12px"><div style="color: #f1f2f4; font-weight: 500">Migrate config loader to zod</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8a8d97">7c5dcf5d-1a20-4b8e…</div></td>
+                  <td style="padding: 12px"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 16px; height: 16px; border-radius: 4px; background: #8E7CF0; color: #160f33; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">π</span>pi</span></td>
+                  <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #c8cad0">~/code/api</td>
+                  <td style="padding: 12px; color: #c8cad0">main</td>
+                  <td style="padding: 12px; color: #b9bbc2">Today 08:40</td>
+                  <td style="padding: 12px; color: #b9bbc2">5h ago</td>
+                  <td style="padding: 12px"><span style="padding: 2px 8px; border-radius: 10px; background: rgba(227,164,71,0.16); color: #E3A447; font-size: 12px">Interrupted</span></td>
+                  <td style="padding: 12px 14px 12px 12px; text-align: right; white-space: nowrap"><button style="height: 28px; padding: 0 12px; border: 1px solid #4a4d57; border-radius: 6px; background: #2a2c33; color: #f1f2f4">Resume</button> <button aria-label="More actions" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #9a9ca5">⋯</button></td>
+                </tr>
+                <tr style="border-top: 1px solid #2e3036">
+                  <td style="padding: 12px 0 12px 14px"><input type="checkbox" aria-label="Select Draft release notes v2.4"></td>
+                  <td style="padding: 12px"><div style="color: #f1f2f4; font-weight: 500">Draft release notes v2.4</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8a8d97">3b1f27a0-9c44-4d1e…</div></td>
+                  <td style="padding: 12px"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 16px; height: 16px; border-radius: 4px; background: #D97757; color: #1a1210; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">C</span>Claude Code</span></td>
+                  <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #c8cad0">~/code/api</td>
+                  <td style="padding: 12px; color: #c8cad0">main</td>
+                  <td style="padding: 12px; color: #b9bbc2">Today 12:20</td>
+                  <td style="padding: 12px; color: #b9bbc2">now</td>
+                  <td style="padding: 12px"><span style="display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 10px; background: rgba(93,187,122,0.16); color: #6fcd8c; font-size: 12px"><span style="width: 6px; height: 6px; border-radius: 3px; background: #6fcd8c"></span>Running</span></td>
+                  <td style="padding: 12px 14px 12px 12px; text-align: right; white-space: nowrap"><button style="height: 28px; padding: 0 12px; border: 1px solid #4a4d57; border-radius: 6px; background: #2a2c33; color: #f1f2f4">Show terminal</button> <button aria-label="More actions" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #9a9ca5">⋯</button></td>
+                </tr>
+                <tr style="border-top: 1px solid #2e3036">
+                  <td style="padding: 12px 0 12px 14px"><input type="checkbox" aria-label="Select Add rate limiting to /search"></td>
+                  <td style="padding: 12px"><div style="color: #f1f2f4; font-weight: 500; display: flex; align-items: center; gap: 6px">Add rate limiting to /search<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Pinned" style="color: #9a9ca5"><path d="M15 3l6 6-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z"></path></svg></div><div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8a8d97">a91c03e2-5f6d-4b70…</div></td>
+                  <td style="padding: 12px"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 16px; height: 16px; border-radius: 4px; background: #D97757; color: #1a1210; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">C</span>Claude Code</span></td>
+                  <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #c8cad0">~/code/api</td>
+                  <td style="padding: 12px; color: #c8cad0">feat/rate-limit</td>
+                  <td style="padding: 12px; color: #b9bbc2">Oct 11 14:30</td>
+                  <td style="padding: 12px; color: #b9bbc2">Yesterday</td>
+                  <td style="padding: 12px"><span style="padding: 2px 8px; border-radius: 10px; background: #2c2e35; color: #b9bbc2; font-size: 12px">Closed</span></td>
+                  <td style="padding: 12px 14px 12px 12px; text-align: right; white-space: nowrap"><button style="height: 28px; padding: 0 12px; border: 1px solid #4a4d57; border-radius: 6px; background: #2a2c33; color: #f1f2f4">Resume</button> <button aria-label="More actions" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #9a9ca5">⋯</button></td>
+                </tr>
+                <tr style="border-top: 1px solid #2e3036">
+                  <td style="padding: 12px 0 12px 14px"><input type="checkbox" aria-label="Select Investigate N+1 in orders query"></td>
+                  <td style="padding: 12px"><div style="color: #f1f2f4; font-weight: 500">Investigate N+1 in orders query</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8a8d97">019da3be-11c0-72aa…</div></td>
+                  <td style="padding: 12px"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 16px; height: 16px; border-radius: 4px; background: #3FA796; color: #08201c; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">X</span>Codex</span></td>
+                  <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #c8cad0">~/code/api</td>
+                  <td style="padding: 12px; color: #c8cad0">perf/orders</td>
+                  <td style="padding: 12px; color: #b9bbc2">Oct 10 16:05</td>
+                  <td style="padding: 12px; color: #b9bbc2">2 days ago</td>
+                  <td style="padding: 12px"><span style="padding: 2px 8px; border-radius: 10px; background: #2c2e35; color: #b9bbc2; font-size: 12px">Exited</span></td>
+                  <td style="padding: 12px 14px 12px 12px; text-align: right; white-space: nowrap"><button style="height: 28px; padding: 0 12px; border: 1px solid #4a4d57; border-radius: 6px; background: #2a2c33; color: #f1f2f4">Resume</button> <button aria-label="More actions" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #9a9ca5">⋯</button></td>
+                </tr>
+                <tr style="border-top: 1px solid #2e3036">
+                  <td style="padding: 12px 0 12px 14px"><input type="checkbox" aria-label="Select Write onboarding docs for SDK"></td>
+                  <td style="padding: 12px"><div style="color: #f1f2f4; font-weight: 500">Write onboarding docs for SDK</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #8a8d97">e4d27f19-0b8a-4c3d…</div></td>
+                  <td style="padding: 12px"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 16px; height: 16px; border-radius: 4px; background: #8E7CF0; color: #160f33; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">π</span>pi</span></td>
+                  <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #c8cad0">~/code/api/sdk</td>
+                  <td style="padding: 12px; color: #c8cad0">docs/sdk</td>
+                  <td style="padding: 12px; color: #b9bbc2">Oct 7 11:12</td>
+                  <td style="padding: 12px; color: #b9bbc2">5 days ago</td>
+                  <td style="padding: 12px"><span style="padding: 2px 8px; border-radius: 10px; background: #2c2e35; color: #b9bbc2; font-size: 12px">Closed</span></td>
+                  <td style="padding: 12px 14px 12px 12px; text-align: right; white-space: nowrap"><button style="height: 28px; padding: 0 12px; border: 1px solid #4a4d57; border-radius: 6px; background: #2a2c33; color: #f1f2f4">Resume</button> <button aria-label="More actions" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #9a9ca5">⋯</button></td>
+                </tr>
+                <tr style="border-top: 1px solid #2e3036">
+                  <td style="padding: 12px 0 12px 14px"><input type="checkbox" aria-label="Select Spike: GraphQL gateway"></td>
+                  <td style="padding: 12px"><div style="color: #9a9ca5; font-weight: 500; text-decoration: line-through">Spike: GraphQL gateway</div><div style="font-size: 11.5px; color: #8a8d97">Transcript removed by Claude Code’s 30-day cleanup</div></td>
+                  <td style="padding: 12px; color: #9a9ca5"><span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 16px; height: 16px; border-radius: 4px; background: #3a3c43; color: #9a9ca5; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">C</span>Claude Code</span></td>
+                  <td style="padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #9a9ca5">~/code/api</td>
+                  <td style="padding: 12px; color: #9a9ca5">spike/graphql</td>
+                  <td style="padding: 12px; color: #9a9ca5">Sep 8 15:44</td>
+                  <td style="padding: 12px; color: #9a9ca5">34 days ago</td>
+                  <td style="padding: 12px"><span style="padding: 2px 8px; border-radius: 10px; border: 1px dashed #5a5d67; color: #9a9ca5; font-size: 12px">Missing</span></td>
+                  <td style="padding: 12px 14px 12px 12px; text-align: right; white-space: nowrap"><button style="height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: #b9bbc2">Archive</button> <button aria-label="More actions" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #9a9ca5">⋯</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; color: #8a8d97; font-size: 12px">
+            <span>8 sessions in api · sorted by last active</span>
+            <span>Resume runs <span style="font-family: 'JetBrains Mono', monospace; color: #c8cad0">claude --resume</span>, <span style="font-family: 'JetBrains Mono', monospace; color: #c8cad0">codex resume</span> or <span style="font-family: 'JetBrains Mono', monospace; color: #c8cad0">pi --session</span> in a new terminal</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer style="height: 24px; flex: 0 0 24px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; background: #18191c; border-top: 1px solid #2e3036; font-size: 12px; color: #9a9ca5">
+    <span>main</span>
+    <button style="height: 20px; padding: 0 8px; border: 0; border-radius: 4px; background: rgba(227,164,71,0.16); color: #E3A447; font-size: 12px">3 interrupted</button>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>After restore and new session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#18191c}
+a{color:#7fb0ff}a:hover{color:#a9c9ff}
+button,input{font:inherit;color:inherit}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #1c1d21; color: #d9dade; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; line-height: 1.4">
+
+  <div style="height: 34px; flex: 0 0 34px; display: flex; align-items: center; justify-content: center; background: #18191c; border-bottom: 1px solid #2e3036; color: #9a9ca5; font-size: 12px">api — Visual Studio Code</div>
+
+  <div style="flex: 1 1 auto; display: flex; flex-wrap: wrap; min-height: 0">
+
+    <div style="flex: 1 1 340px; max-width: 360px; display: flex; min-width: 0">
+      <nav aria-label="Activity bar" style="flex: 0 0 48px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 8px; background: #18191c; border-right: 1px solid #2e3036">
+        <button aria-label="Explorer" style="width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: #8a8d97; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>
+        </button>
+        <button aria-label="Search" style="width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: #8a8d97; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.5; stroke-linecap: round"><circle cx="11" cy="11" r="6"></circle><path d="M20 20l-4.5-4.5"></path></svg>
+        </button>
+        <button aria-label="Agent Sessions" aria-current="page" style="width: 40px; height: 40px; border: 0; border-radius: 8px; background: #2a2c33; color: #ffffff; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 8v4l3 2"></path></svg>
+        </button>
+      </nav>
+
+      <aside aria-label="Agent Sessions" style="flex: 1 1 auto; min-width: 0; background: #212227; border-right: 1px solid #2e3036; display: flex; flex-direction: column">
+        <div style="height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #b9bbc2">AGENT SESSIONS</span>
+          <button aria-label="New session" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: #2f3138; color: #f1f2f4; display: flex; align-items: center; justify-content: center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round"><path d="M12 5v14M5 12h14"></path></svg>
+          </button>
+        </div>
+
+        <div style="padding: 4px 4px 12px; display: flex; flex-direction: column; gap: 2px">
+          <div style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; color: #b9bbc2; font-size: 11px; font-weight: 600; letter-spacing: 0.06em">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+            RUNNING<span style="margin-left: auto; font-weight: 500; color: #9a9ca5">4</span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px; background: #2b2d34">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #D97757; color: #1a1210; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">C</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #f1f2f4; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Refactor auth middleware</div>
+              <div style="color: #9a9ca5; font-size: 11.5px; display: flex; align-items: center; gap: 6px"><span style="width: 7px; height: 7px; border-radius: 4px; background: #5DBB7A"></span>Resumed just now</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #3FA796; color: #08201c; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">X</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #e4e5e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Fix flaky payment webhook tests</div>
+              <div style="color: #9a9ca5; font-size: 11.5px; display: flex; align-items: center; gap: 6px"><span style="width: 7px; height: 7px; border-radius: 4px; background: #5DBB7A"></span>Resumed just now</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #8E7CF0; color: #160f33; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">π</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #e4e5e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Migrate config loader to zod</div>
+              <div style="color: #9a9ca5; font-size: 11.5px; display: flex; align-items: center; gap: 6px"><span style="width: 7px; height: 7px; border-radius: 4px; background: #5DBB7A"></span>Resumed just now</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #D97757; color: #1a1210; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">C</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #e4e5e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Draft release notes v2.4</div>
+              <div style="color: #9a9ca5; font-size: 11.5px; display: flex; align-items: center; gap: 6px"><span style="width: 7px; height: 7px; border-radius: 4px; background: #5DBB7A"></span>Active now</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 6px; height: 28px; margin-top: 8px; padding: 0 8px; color: #b9bbc2; font-size: 11px; font-weight: 600; letter-spacing: 0.06em">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg>
+            THIS WORKSPACE<span style="margin-left: auto; font-weight: 500; color: #9a9ca5">3</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; color: #b9bbc2; font-size: 11px; font-weight: 600; letter-spacing: 0.06em">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg>
+            ALL WORKSPACES<span style="margin-left: auto; font-weight: 500; color: #9a9ca5">27</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <main style="position: relative; flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; background: #1c1d21">
+      <div style="height: 36px; display: flex; align-items: stretch; background: #18191c; border-bottom: 1px solid #2e3036">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 0 16px; background: #1c1d21; border-right: 1px solid #2e3036; color: #f1f2f4">
+          <span style="color: #6ea8fe; font-family: 'JetBrains Mono', monospace; font-size: 11px">TS</span>auth.ts
+        </div>
+      </div>
+      <div style="flex: 1 1 auto; background: #1c1d21; opacity: 0.45"></div>
+
+      <div role="dialog" aria-labelledby="new-title" style="position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 600px; max-width: calc(100% - 32px); box-sizing: border-box; padding: 12px; border-radius: 10px; background: #26282e; border: 1px solid #3a3d46; box-shadow: 0 16px 40px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 10px">
+        <div id="new-title" style="display: flex; align-items: center; gap: 8px; color: #b9bbc2; font-size: 12px">
+          <span style="width: 16px; height: 16px; border-radius: 4px; background: #D97757; color: #1a1210; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center">C</span>New Claude Code session (2/2)
+        </div>
+        <label style="display: flex; flex-direction: column; gap: 6px">
+          <span class="sr-only">Session title</span>
+          <input type="text" value="Add audit log export" style="height: 34px; padding: 0 10px; border-radius: 6px; border: 1px solid #2F6FDB; background: #18191c; color: #f4f5f7; outline: none">
+        </label>
+        <div style="color: #9a9ca5; font-size: 12px">Press Enter to run <span style="font-family: 'JetBrains Mono', monospace; color: #c8cad0">claude --session-id 8f2c… --name "Add audit log export"</span> in ~/code/api. The ID is recorded before Claude starts.</div>
+      </div>
+
+      <section aria-label="Terminal panel" style="flex: 0 0 380px; display: flex; flex-direction: column; border-top: 1px solid #2e3036; background: #18191c">
+        <div style="height: 34px; display: flex; align-items: center; gap: 20px; padding: 0 16px; font-size: 11px; letter-spacing: 0.06em; color: #8a8d97">
+          <span>PROBLEMS</span><span>OUTPUT</span><span style="color: #f1f2f4; padding: 9px 0 7px; border-bottom: 1px solid #f1f2f4">TERMINAL</span>
+        </div>
+        <div style="flex: 1; display: flex; min-height: 0">
+          <pre style="flex: 1; min-width: 0; margin: 0; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #c8cad0; white-space: pre-wrap"><span style="color: #5DBB7A">~/code/api</span> <span style="color: #8a8d97">(feat/auth)</span> $ claude --resume 550e8400-e29b-41d4-a716-446655440000
+<span style="color: #8a8d97">Resumed “Refactor auth middleware” · 23 earlier messages restored</span>
+
+&gt; Where were we?
+<span style="color: #D97757">●</span> We moved token checks into requireAuth and still need to
+  update the three routes in routes.ts that call verifyToken directly.</pre>
+          <div style="flex: 0 0 260px; border-left: 1px solid #2e3036; padding: 6px; display: flex; flex-direction: column; gap: 2px; font-size: 12.5px">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; background: #2a2c33; color: #f1f2f4">
+              <span style="flex: 0 0 14px; height: 14px; border-radius: 4px; background: #D97757; color: #1a1210; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center">C</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Refactor auth middleware</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; color: #b9bbc2">
+              <span style="flex: 0 0 14px; height: 14px; border-radius: 4px; background: #3FA796; color: #08201c; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center">X</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Fix flaky payment webhook tests</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; color: #b9bbc2">
+              <span style="flex: 0 0 14px; height: 14px; border-radius: 4px; background: #8E7CF0; color: #160f33; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center">π</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Migrate config loader to zod</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; color: #b9bbc2">
+              <span style="flex: 0 0 14px; height: 14px; border-radius: 4px; background: #D97757; color: #1a1210; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center">C</span><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Draft release notes v2.4</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; color: #b9bbc2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="flex: 0 0 14px; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round"><path d="M5 7l5 5-5 5"></path><path d="M12 18h7"></path></svg>zsh
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer style="height: 24px; flex: 0 0 24px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; background: #18191c; border-top: 1px solid #2e3036; font-size: 12px; color: #9a9ca5">
+    <span>feat/auth</span>
+    <span style="display: flex; align-items: center; gap: 6px"><span style="width: 7px; height: 7px; border-radius: 4px; background: #5DBB7A"></span>4 agent sessions running</span>
+  </footer>
+</div>
+</body>
+</html>

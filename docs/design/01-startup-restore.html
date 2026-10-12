@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Startup restore prompt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#18191c}
+a{color:#7fb0ff}a:hover{color:#a9c9ff}
+button,input{font:inherit;color:inherit}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #1c1d21; color: #d9dade; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; line-height: 1.4">
+
+  <div style="height: 34px; flex: 0 0 34px; display: flex; align-items: center; justify-content: center; background: #18191c; border-bottom: 1px solid #2e3036; color: #9a9ca5; font-size: 12px">api — Visual Studio Code</div>
+
+  <div style="flex: 1 1 auto; display: flex; flex-wrap: wrap; min-height: 0">
+
+    <div style="flex: 1 1 340px; max-width: 360px; display: flex; min-width: 0">
+      <nav aria-label="Activity bar" style="flex: 0 0 48px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 8px; background: #18191c; border-right: 1px solid #2e3036">
+        <button aria-label="Explorer" style="width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: #8a8d97; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>
+        </button>
+        <button aria-label="Search" style="width: 40px; height: 40px; border: 0; border-radius: 8px; background: transparent; color: #8a8d97; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.5; stroke-linecap: round"><circle cx="11" cy="11" r="6"></circle><path d="M20 20l-4.5-4.5"></path></svg>
+        </button>
+        <button aria-label="Agent Sessions" aria-current="page" style="position: relative; width: 40px; height: 40px; border: 0; border-radius: 8px; background: #2a2c33; color: #ffffff; display: flex; align-items: center; justify-content: center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 8v4l3 2"></path></svg>
+          <span style="position: absolute; top: 4px; right: 4px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 8px; background: #E3A447; color: #1a1406; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center">3</span>
+        </button>
+      </nav>
+
+      <aside aria-label="Agent Sessions" style="flex: 1 1 auto; min-width: 0; background: #212227; border-right: 1px solid #2e3036; display: flex; flex-direction: column">
+        <div style="height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px">
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.08em; color: #b9bbc2">AGENT SESSIONS</span>
+          <div style="display: flex; gap: 2px">
+            <button aria-label="New session" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #b9bbc2; display: flex; align-items: center; justify-content: center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round"><path d="M12 5v14M5 12h14"></path></svg>
+            </button>
+            <button aria-label="Open history" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #b9bbc2; display: flex; align-items: center; justify-content: center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>
+            </button>
+            <button aria-label="Refresh" style="width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: #b9bbc2; display: flex; align-items: center; justify-content: center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <div style="padding: 4px 12px 10px">
+          <label style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; border-radius: 6px; background: #18191c; border: 1px solid #34363d; color: #8a8d97">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round"><circle cx="11" cy="11" r="6"></circle><path d="M20 20l-4.5-4.5"></path></svg>
+            <span class="sr-only">Filter sessions</span>
+            <input type="text" placeholder="Filter sessions" style="flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: 12.5px; color: #d9dade">
+          </label>
+        </div>
+
+        <div style="padding: 0 4px 12px; display: flex; flex-direction: column; gap: 2px; overflow: auto">
+
+          <button style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; border: 0; background: transparent; color: #E3A447; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-align: left">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+            INTERRUPTED<span style="margin-left: auto; font-weight: 500; color: #E3A447">3</span>
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px; background: #2b2d34">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #D97757; color: #1a1210; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">C</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #f1f2f4; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Refactor auth middleware</div>
+              <div style="color: #9a9ca5; font-size: 11.5px">Claude Code · feat/auth · 2h ago</div>
+            </div>
+            <button aria-label="Resume Refactor auth middleware" style="flex: 0 0 28px; height: 28px; border: 0; border-radius: 6px; background: #3a3d46; color: #f1f2f4; display: flex; align-items: center; justify-content: center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"></path></svg>
+            </button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #3FA796; color: #08201c; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">X</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #e4e5e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Fix flaky payment webhook tests</div>
+              <div style="color: #9a9ca5; font-size: 11.5px">Codex · fix/webhooks · 3h ago</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #8E7CF0; color: #160f33; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">π</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #e4e5e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Migrate config loader to zod</div>
+              <div style="color: #9a9ca5; font-size: 11.5px">pi · main · 5h ago</div>
+            </div>
+          </div>
+
+          <button style="display: flex; align-items: center; gap: 6px; height: 28px; margin-top: 8px; padding: 0 8px; border: 0; background: transparent; color: #b9bbc2; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-align: left">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+            RUNNING<span style="margin-left: auto; font-weight: 500; color: #9a9ca5">1</span>
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #D97757; color: #1a1210; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">C</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #e4e5e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Draft release notes v2.4</div>
+              <div style="color: #9a9ca5; font-size: 11.5px; display: flex; align-items: center; gap: 6px"><span style="width: 7px; height: 7px; border-radius: 4px; background: #5DBB7A"></span>Claude Code · active now</div>
+            </div>
+          </div>
+
+          <button style="display: flex; align-items: center; gap: 6px; height: 28px; margin-top: 8px; padding: 0 8px; border: 0; background: transparent; color: #b9bbc2; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-align: left">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round"><path d="M6 9l6 6 6-6"></path></svg>
+            THIS WORKSPACE<span style="margin-left: auto; font-weight: 500; color: #9a9ca5">6</span>
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #D97757; color: #1a1210; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">C</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #e4e5e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Add rate limiting to /search</div>
+              <div style="color: #9a9ca5; font-size: 11.5px">Claude Code · closed · yesterday</div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Pinned" style="color: #9a9ca5"><path d="M15 3l6 6-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z"></path></svg>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #3FA796; color: #08201c; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">X</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #e4e5e8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Investigate N+1 in orders query</div>
+              <div style="color: #9a9ca5; font-size: 11.5px">Codex · exited · 2 days ago</div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 22px; border-radius: 6px">
+            <span style="flex: 0 0 20px; height: 20px; border-radius: 5px; background: #3a3c43; color: #9a9ca5; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">C</span>
+            <div style="flex: 1; min-width: 0">
+              <div style="color: #9a9ca5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: line-through">Spike: GraphQL gateway</div>
+              <div style="color: #8a8d97; font-size: 11.5px">Transcript expired · 34 days ago</div>
+            </div>
+          </div>
+
+          <button style="display: flex; align-items: center; gap: 6px; height: 28px; margin-top: 8px; padding: 0 8px; border: 0; background: transparent; color: #b9bbc2; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-align: left">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round"><path d="M9 6l6 6-6 6"></path></svg>
+            ALL WORKSPACES<span style="margin-left: auto; font-weight: 500; color: #9a9ca5">27</span>
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <main style="position: relative; flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; background: #1c1d21">
+      <div style="height: 36px; display: flex; align-items: stretch; background: #18191c; border-bottom: 1px solid #2e3036">
+        <div style="display: flex; align-items: center; gap: 8px; padding: 0 16px; background: #1c1d21; border-right: 1px solid #2e3036; color: #f1f2f4">
+          <span style="color: #6ea8fe; font-family: 'JetBrains Mono', monospace; font-size: 11px">TS</span>auth.ts
+        </div>
+        <div style="display: flex; align-items: center; padding: 0 16px; color: #8a8d97">routes.ts</div>
+      </div>
+      <pre style="flex: 1 1 auto; margin: 0; padding: 16px 24px; overflow: auto; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #b9bbc2; white-space: pre"><span style="color: #c792ea">import</span> { Request, Response, NextFunction } <span style="color: #c792ea">from</span> <span style="color: #c3e88d">'express'</span>;
+<span style="color: #c792ea">import</span> { verifyToken } <span style="color: #c792ea">from</span> <span style="color: #c3e88d">'./tokens'</span>;
+
+<span style="color: #c792ea">export async function</span> <span style="color: #82aaff">requireAuth</span>(req: Request, res: Response, next: NextFunction) {
+  <span style="color: #c792ea">const</span> header = req.headers.authorization;
+  <span style="color: #c792ea">if</span> (!header?.startsWith(<span style="color: #c3e88d">'Bearer '</span>)) {
+    <span style="color: #c792ea">return</span> res.status(<span style="color: #f78c6c">401</span>).json({ error: <span style="color: #c3e88d">'missing token'</span> });
+  }
+  <span style="color: #c792ea">const</span> claims = <span style="color: #c792ea">await</span> verifyToken(header.slice(<span style="color: #f78c6c">7</span>));
+  req.user = claims;
+  next();
+}</pre>
+
+      <section aria-label="Terminal panel" style="flex: 0 0 280px; display: flex; flex-direction: column; border-top: 1px solid #2e3036; background: #18191c">
+        <div style="height: 34px; display: flex; align-items: center; gap: 20px; padding: 0 16px; font-size: 11px; letter-spacing: 0.06em; color: #8a8d97">
+          <span>PROBLEMS</span><span>OUTPUT</span><span style="color: #f1f2f4; padding: 9px 0 7px; border-bottom: 1px solid #f1f2f4">TERMINAL</span>
+        </div>
+        <div style="flex: 1; display: flex; min-height: 0">
+          <pre style="flex: 1; min-width: 0; margin: 0; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7; color: #c8cad0; white-space: pre-wrap"><span style="color: #5DBB7A">~/code/api</span> <span style="color: #8a8d97">(main)</span> $ claude -n "Draft release notes v2.4"
+<span style="color: #8a8d97">Session named “Draft release notes v2.4”</span>
+
+&gt; Draft the v2.4 release notes from the PRs merged since v2.3
+<span style="color: #D97757">●</span> Reading CHANGELOG.md and 14 merged pull requests…</pre>
+          <div style="flex: 0 0 220px; border-left: 1px solid #2e3036; padding: 6px; display: flex; flex-direction: column; gap: 2px; font-size: 12.5px">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; color: #b9bbc2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round"><path d="M5 7l5 5-5 5"></path><path d="M12 18h7"></path></svg>zsh
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 5px; background: #2a2c33; color: #f1f2f4">
+              <span style="width: 14px; height: 14px; border-radius: 4px; background: #D97757; color: #1a1210; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center">C</span>Draft release notes v2.4
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div role="alertdialog" aria-labelledby="restore-title" style="position: absolute; right: 16px; bottom: 296px; width: 440px; max-width: calc(100% - 32px); box-sizing: border-box; padding: 16px; border-radius: 10px; background: #26282e; border: 1px solid #3a3d46; box-shadow: 0 12px 32px rgba(0,0,0,0.45); display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; gap: 12px">
+          <span style="flex: 0 0 28px; height: 28px; border-radius: 8px; background: rgba(227,164,71,0.16); color: #E3A447; display: flex; align-items: center; justify-content: center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path><path d="M12 8v4l3 2"></path></svg>
+          </span>
+          <div style="flex: 1; min-width: 0">
+            <div id="restore-title" style="color: #f1f2f4; font-weight: 500">3 agent sessions were interrupted when VS Code closed.</div>
+            <div style="margin-top: 4px; color: #9a9ca5; font-size: 12px">Claude Code, Codex and pi in api. Each reopens in its own terminal with its full history.</div>
+          </div>
+          <button aria-label="Close" style="flex: 0 0 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: #9a9ca5; display: flex; align-items: center; justify-content: center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 2; stroke-linecap: round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap">
+          <button style="height: 32px; padding: 0 14px; border: 0; border-radius: 6px; background: transparent; color: #b9bbc2">Dismiss</button>
+          <button style="height: 32px; padding: 0 14px; border: 1px solid #4a4d57; border-radius: 6px; background: #2f3138; color: #f1f2f4">Choose…</button>
+          <button style="height: 32px; padding: 0 14px; border: 0; border-radius: 6px; background: #2F6FDB; color: #ffffff; font-weight: 500">Restore all</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer style="height: 24px; flex: 0 0 24px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; background: #18191c; border-top: 1px solid #2e3036; font-size: 12px; color: #9a9ca5">
+    <span style="display: flex; align-items: center; gap: 6px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round"><circle cx="6" cy="6" r="2"></circle><circle cx="6" cy="18" r="2"></circle><circle cx="18" cy="8" r="2"></circle><path d="M6 8v8M18 10c0 4-6 3-11 7"></path></svg>main
+    </span>
+    <button style="height: 20px; padding: 0 8px; border: 0; border-radius: 4px; background: rgba(227,164,71,0.16); color: #E3A447; font-size: 12px; display: flex; align-items: center; gap: 6px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true" style="stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>3 interrupted
+    </button>
+  </footer>
+</div>
+</body>
+</html>
