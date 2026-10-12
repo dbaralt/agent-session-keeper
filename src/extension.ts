@@ -5,6 +5,10 @@ import { Correlator } from './capture/Correlator';
 import { SessionDirWatcher } from './capture/SessionDirWatcher';
 import { TerminalMonitor } from './capture/TerminalMonitor';
 import { initLog, log } from './log';
+import type { SessionRecord } from './model/types';
+import { Restorer } from './restore/Restorer';
+import { StartupRestore } from './restore/StartupRestore';
+import { StatusBar } from './restore/StatusBar';
 import { SessionStore } from './store/SessionStore';
 import { resolveStorageDir } from './store/storageDir';
 import { activationMessage } from './util/activation';
@@ -15,8 +19,6 @@ const STUB_COMMANDS = [
   'agentSessions.openHistory',
   'agentSessions.refresh',
   'agentSessions.newSession',
-  'agentSessions.resume',
-  'agentSessions.restoreInterrupted',
   'agentSessions.newClaude',
   'agentSessions.newPi',
   'agentSessions.rename',
@@ -109,6 +111,63 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const treeProvider = new SessionTreeProvider();
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('agentSessions.tree', treeProvider),
+  );
+
+  const restorer = new Restorer({
+    store,
+    registry,
+    logger: log(),
+    windowSessionId: vscode.env.sessionId,
+    terminalLocation: settings().get<'panel' | 'editor'>('terminalLocation') ?? 'panel',
+    resumeTemplateFor: (agent) => {
+      const value = settings().get<string>(`agents.${agent}.resumeCommand`);
+      return value && value.trim() ? value : undefined;
+    },
+  });
+
+  const statusBar = new StatusBar();
+  context.subscriptions.push(statusBar);
+  const refreshStatusBar = (): void => {
+    statusBar.update(store.all().filter((record) => record.status === 'interrupted').length);
+  };
+  context.subscriptions.push({ dispose: store.onDidChange(refreshStatusBar) });
+
+  const startup = new StartupRestore({
+    store,
+    restorer,
+    statusBar,
+    logger: log(),
+    setting: settings().get<'prompt' | 'always' | 'never'>('restoreOnStartup') ?? 'prompt',
+  });
+  void startup.run();
+
+  const resolveRecord = (arg: unknown): SessionRecord | undefined => {
+    if (!arg || typeof arg !== 'object') return undefined;
+    const candidate = arg as { record?: SessionRecord; agent?: string; sessionId?: string } & Partial<SessionRecord>;
+    if (candidate.record) return candidate.record;
+    if (candidate.agent && candidate.sessionId) {
+      return store.get(candidate.agent, candidate.sessionId) ?? (candidate as SessionRecord);
+    }
+    return undefined;
+  };
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('agentSessions.resume', async (arg?: unknown) => {
+      const record = resolveRecord(arg);
+      if (!record) {
+        void vscode.window.showWarningMessage('Agent Sessions: no session selected.');
+        return;
+      }
+      await restorer.resume(record);
+    }),
+    vscode.commands.registerCommand('agentSessions.restoreInterrupted', async () => {
+      const interrupted = store.all().filter((record) => record.status === 'interrupted');
+      if (interrupted.length === 0) {
+        void vscode.window.showInformationMessage('Agent Sessions: nothing to restore.');
+        return;
+      }
+      await startup.chooseAndResume(interrupted);
+    }),
   );
 
   for (const command of STUB_COMMANDS) {

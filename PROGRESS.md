@@ -8,7 +8,7 @@ The coding agent keeps this file up to date. Tick a milestone only when its "Don
 - [x] M2 Model and store — per-file records, atomic writes, field-level merge, cross-window watcher
 - [x] M3 Adapters — command-line matching (25+ cases) and session-file readers for claude, codex, pi
 - [x] M4 Capture — terminal monitor, folder watcher, correlator; records appear within 5 s of the first prompt
-- [ ] M5 Restore — interrupted detection, startup prompt, Restore all, status bar item, `missing` handling
+- [x] M5 Restore — interrupted detection, startup prompt, Restore all, status bar item, `missing` handling
 - [ ] M6 UI — sidebar tree, history page, rename, pin, archive, copy command, open transcript
 - [ ] M7 Exact capture — launchers, hook installer and uninstaller, hook bridge, process-tree matching, import existing
 
@@ -68,6 +68,15 @@ Sections of `docs/TESTING.md` the owner can run after each milestone:
 - Fixed a real macOS bug: VS Code reports `/var/...` while an agent's `process.cwd()` is `/private/var/...`; cwd comparison now resolves symlinks (`canonicalPath`/`pathsEqual`).
 - `npm run test:integration` works without the `code` CLI: `@vscode/test-electron` downloads VS Code; `run.mjs` handles the macOS binary rename (`Code` instead of `Electron`) in recent builds.
 - Confirmed `agentSessions` as an activity-bar container id now collides with a built-in in VS Code 1.141, so the container is `agentSessionKeeper` (the tree view stays `agentSessions.tree`).
+
+### M5 Restore
+
+- `src/restore/interrupted.ts`: pure `detectInterrupted(records, windowSessionId, liveTerminals)` — marks foreign `running`/`pending` records with no live terminal as `interrupted`, rebinds ones whose shell pid (or terminal name) is still alive after a reload. Unit-tested.
+- `src/restore/Restorer.ts`: `resume`/`resumeMany` (500 ms apart). Checks the transcript exists first and sets `missing` with a warning if not; falls back to a folder picker when `cwd` is gone; creates a terminal with `AGENT_SESSIONS_TERMINAL_ID`; waits up to 3 s for shell integration then runs the resume command (or `sendText`); records `running`, `lastResumedAt` and the new `windowSessionId`.
+- `src/restore/StatusBar.ts`: `$(history) N interrupted`, shown only when N > 0, click opens the restore picker.
+- `src/restore/StartupRestore.ts`: runs on activation, applies `restoreOnStartup` (`prompt`/`always`/`never`), filters to the current workspace, and offers **Restore all** / **Choose…** / **Dismiss**.
+- `agentSessions.resume` and `agentSessions.restoreInterrupted` are now real commands; the status bar refreshes on store changes.
+- Integration tests: a session with a deleted transcript becomes `missing`; a session with a live transcript reopens in a terminal named after it and returns to `running`. The startup notification/status bar run at activation, so their logic is covered by the `detectInterrupted` unit tests rather than the integration run.
 
 ## Decisions
 

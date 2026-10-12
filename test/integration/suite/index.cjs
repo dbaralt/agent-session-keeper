@@ -9,6 +9,7 @@ async function run() {
   const mocha = new Mocha({ ui: 'tdd', color: true, timeout: 60000 });
   mocha.addFile(path.join(__dirname, 'activation.test.cjs'));
   mocha.addFile(path.join(__dirname, 'capture.test.cjs'));
+  mocha.addFile(path.join(__dirname, 'restore.test.cjs'));
 
   await new Promise((resolve, reject) => {
     mocha.run((failures) => {
