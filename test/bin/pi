@@ -1,0 +1,94 @@
+#!/usr/bin/env node
+'use strict';
+
+// Fake pi for sandbox and integration tests. It never calls the real agent and
+// writes only under PI_CODING_AGENT_DIR / PI_CODING_AGENT_SESSION_DIR.
+const { randomUUID } = require('node:crypto');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const readline = require('node:readline');
+
+function parseArgs(argv) {
+  const out = { sessionId: undefined, name: undefined, resume: undefined, cont: false };
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--session-id') out.sessionId = argv[++i];
+    else if (arg.startsWith('--session-id=')) out.sessionId = arg.slice('--session-id='.length);
+    else if (arg === '--name' || arg === '-n') out.name = argv[++i];
+    else if (arg.startsWith('--name=')) out.name = arg.slice('--name='.length);
+    else if (arg === '--session' || arg === '--resume' || arg === '-r') out.resume = argv[++i];
+    else if (arg === '--continue' || arg === '-c') out.cont = true;
+  }
+  return out;
+}
+
+function timestampSlug(date = new Date()) {
+  return date.toISOString().replace(/[:.]/g, '-');
+}
+
+function encodeDir(cwd) {
+  const joined = cwd.replace(/\\/g, '/').split('/').filter(Boolean).join('-');
+  return `--${joined}--`;
+}
+
+const args = parseArgs(process.argv.slice(2));
+const cwd = process.cwd();
+const agentDir = process.env.PI_CODING_AGENT_DIR || path.join(os.homedir(), '.pi', 'agent');
+const sessionsDir = process.env.PI_CODING_AGENT_SESSION_DIR || path.join(agentDir, 'sessions');
+const projectDir = path.join(sessionsDir, encodeDir(cwd));
+let sessionId = args.sessionId || args.resume || randomUUID();
+let file = path.join(projectDir, `${timestampSlug()}_${sessionId}.jsonl`);
+let created = false;
+
+function ensureHeader() {
+  if (created) return;
+  fs.mkdirSync(projectDir, { recursive: true });
+  const header = {
+    type: 'session',
+    id: sessionId,
+    timestamp: new Date().toISOString(),
+    cwd,
+    version: 3,
+  };
+  fs.writeFileSync(file, `${JSON.stringify(header)}\n`);
+  created = true;
+}
+
+function append(text) {
+  ensureHeader();
+  const line = {
+    type: 'message',
+    id: randomUUID(),
+    message: { role: 'user', content: text },
+    timestamp: new Date().toISOString(),
+  };
+  fs.appendFileSync(file, `${JSON.stringify(line)}\n`);
+}
+
+function startNew() {
+  sessionId = randomUUID();
+  file = path.join(projectDir, `${timestampSlug()}_${sessionId}.jsonl`);
+  created = false;
+}
+
+process.stdout.write(`pi (fake) session ${sessionId}\n`);
+if (args.name) process.stdout.write(`name: ${args.name}\n`);
+if (args.resume) process.stdout.write(`resumed ${args.resume}\n`);
+process.stdout.write('> ');
+
+const rl = readline.createInterface({ input: process.stdin });
+rl.on('line', (line) => {
+  if (line === '/exit' || line === '/quit') {
+    rl.close();
+    return;
+  }
+  if (line === '/new' || line === '/clear') {
+    startNew();
+    process.stdout.write(`new session ${sessionId}\n> `);
+    return;
+  }
+  append(line);
+  process.stdout.write('> ');
+});
+rl.on('close', () => process.exit(0));

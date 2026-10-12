@@ -7,7 +7,7 @@ The coding agent keeps this file up to date. Tick a milestone only when its "Don
 - [x] M1 Scaffold — F5 opens an Extension Development Host; the "Agent Sessions" log shows "activated"
 - [x] M2 Model and store — per-file records, atomic writes, field-level merge, cross-window watcher
 - [x] M3 Adapters — command-line matching (25+ cases) and session-file readers for claude, codex, pi
-- [ ] M4 Capture — terminal monitor, folder watcher, correlator; records appear within 5 s of the first prompt
+- [x] M4 Capture — terminal monitor, folder watcher, correlator; records appear within 5 s of the first prompt
 - [ ] M5 Restore — interrupted detection, startup prompt, Restore all, status bar item, `missing` handling
 - [ ] M6 UI — sidebar tree, history page, rename, pin, archive, copy command, open transcript
 - [ ] M7 Exact capture — launchers, hook installer and uninstaller, hook bridge, process-tree matching, import existing
@@ -57,6 +57,17 @@ Sections of `docs/TESTING.md` the owner can run after each milestone:
 - **Codex dropped** per the owner's instruction. `AgentId` is now a plain string, so a Codex adapter can be added later without touching the model, the store or the UI. Removed `agentSessions.newCodex` and all `agents.codex.*` settings.
 - Tests: 113 total; `commandLine` 19, `claude` 40, `pi` 31 — 70+ distinct command lines plus fixture-based readers.
 - Fixtures are synthetic (not copied from real transcripts); the real on-disk layouts were inspected read-only to confirm them.
+
+### M4 Capture
+
+- `src/capture/Correlator.ts`: binds launches, session files and terminal events to records. Pure (clock injected), so it is unit-tested with synthetic events. Handles explicit-id launch, file-watcher match (oldest launch first), `/clear` rebinding with `parentSessionId`, existing-transcript activity updates (throttled 10 s), pending-launch expiry, and exited/closed transitions.
+- `src/capture/SessionDirWatcher.ts`: watches each adapter's roots (or their nearest existing ancestor, so roots may be created later), debounces 250 ms, marks files already present at start as known, and emits `SessionFileEvent`s.
+- `src/capture/TerminalMonitor.ts`: subscribes to `onDidStart/EndTerminalShellExecution` and `onDidCloseTerminal`, matches commands via the registry, and feeds the correlator.
+- Fake agents in `test/bin/claude` and `test/bin/pi` (+ `.cmd` shims) write realistic session files under the three root env vars and honour `--session-id`, `--name`, `--resume`/`--session`, `/clear` and `/new`.
+- Tests: 9 Correlator + 1 watcher unit tests, plus 3 integration tests in a real Extension Development Host (claude transcript, pi transcript, and a terminal launch bound with `shell-integration` / `high` confidence).
+- Fixed a real macOS bug: VS Code reports `/var/...` while an agent's `process.cwd()` is `/private/var/...`; cwd comparison now resolves symlinks (`canonicalPath`/`pathsEqual`).
+- `npm run test:integration` works without the `code` CLI: `@vscode/test-electron` downloads VS Code; `run.mjs` handles the macOS binary rename (`Code` instead of `Electron`) in recent builds.
+- Confirmed `agentSessions` as an activity-bar container id now collides with a built-in in VS Code 1.141, so the container is `agentSessionKeeper` (the tree view stays `agentSessions.tree`).
 
 ## Decisions
 

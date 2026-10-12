@@ -1,7 +1,7 @@
 # Agent Session Keeper
 
-A personal VS Code extension that records the session ID of every Claude Code,
-Codex and pi session started in an integrated terminal and lets you reopen those
+A personal VS Code extension that records the session ID of every Claude Code
+and pi session started in an integrated terminal and lets you reopen those
 sessions after VS Code restarts.
 
 The agents already save their conversations and can resume them by ID. What a
@@ -24,15 +24,19 @@ set to override it (used by the sandbox and integration tests).
 
 ```bash
 npm install
-npm run build      # type-check + bundle to dist/extension.js
-npm test           # unit tests, no VS Code window
-npm run watch      # rebuild on change (used by F5)
-npm run sandbox    # Extension Development Host with fake agents in .sandbox/
-npm run package    # agent-session-keeper-<version>.vsix
+npm run build             # type-check + bundle to dist/extension.js
+npm test                  # unit tests, no VS Code window
+npm run test:integration  # @vscode/test-electron; downloads VS Code, uses fake agents
+npm run watch             # rebuild on change (used by F5)
+npm run sandbox           # Extension Development Host with fake agents in .sandbox/
+npm run package           # agent-session-keeper-<version>.vsix
 ```
 
 Press **F5** for a plain Extension Development Host.
 
+Adding another agent is one adapter file implementing `AgentAdapter` plus one
+`register(...)` line in `src/agents/registry.ts`; no model, store or UI change.
+
 ## Status
 
-Milestone 1 (scaffold) — see [`PROGRESS.md`](PROGRESS.md).
+See [`PROGRESS.md`](PROGRESS.md) for the milestone checklist and notes.

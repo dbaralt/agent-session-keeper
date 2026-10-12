@@ -1,3 +1,4 @@
+import { realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
@@ -12,4 +13,17 @@ export function expandHome(value: string, home: string = homeDir()): string {
     return path.join(home, value.slice(2));
   }
   return value;
+}
+
+/** Resolve symlinks when possible, so `/var` and `/private/var` compare equal. */
+export function canonicalPath(value: string): string {
+  try {
+    return realpathSync.native(value);
+  } catch {
+    return path.resolve(value);
+  }
+}
+
+export function pathsEqual(a: string, b: string): boolean {
+  return canonicalPath(a) === canonicalPath(b);
 }

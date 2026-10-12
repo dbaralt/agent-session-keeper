@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { SessionFileInfo, SessionRecord } from '../model/types';
-import { expandHome, homeDir } from '../util/paths';
+import { expandHome, homeDir, pathsEqual } from '../util/paths';
 import {
   applyResumeTemplate,
   type AgentAdapter,
@@ -166,9 +166,7 @@ export function createPiAdapter(options: PiAdapterOptions = {}): AgentAdapter {
     },
 
     fileBelongsToCwd(filePath: string, info: SessionFileInfo, cwd: string): boolean {
-      if (info.cwd) {
-        return path.resolve(info.cwd) === path.resolve(cwd);
-      }
+      if (info.cwd) return pathsEqual(info.cwd, cwd);
       const dirName = path.basename(path.dirname(filePath));
       return encodePiDirCandidates(cwd).includes(dirName);
     },

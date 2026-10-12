@@ -78,6 +78,8 @@ export interface PendingLaunch {
   explicitSessionId?: string;
   isResume: boolean;
   name?: string;
+  via?: LaunchVia;
+  terminalName?: string;
 }
 
 /** What an adapter can read from the envelope of a session file. */

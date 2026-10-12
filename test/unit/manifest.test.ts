@@ -48,8 +48,8 @@ describe('package.json manifest', () => {
   });
 
   it('contributes the sessions view container and tree view', () => {
-    expect(manifest.contributes.viewsContainers.activitybar[0]?.id).toBe('agentSessions');
-    expect(manifest.contributes.views.agentSessions?.[0]?.id).toBe('agentSessions.tree');
+    expect(manifest.contributes.viewsContainers.activitybar[0]?.id).toBe('agentSessionKeeper');
+    expect(manifest.contributes.views.agentSessionKeeper?.[0]?.id).toBe('agentSessions.tree');
   });
 
   it('contributes the spec command set', () => {

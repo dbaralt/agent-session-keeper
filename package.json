@@ -26,14 +26,14 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "agentSessions",
+          "id": "agentSessionKeeper",
           "title": "Agent Sessions",
           "icon": "resources/agent-sessions.svg"
         }
       ]
     },
     "views": {
-      "agentSessions": [
+      "agentSessionKeeper": [
         {
           "id": "agentSessions.tree",
           "name": "Sessions"

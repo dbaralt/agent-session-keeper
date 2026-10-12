@@ -1,5 +1,5 @@
 import type { AgentId } from '../model/types';
-import type { AgentAdapter } from './AgentAdapter';
+import type { AgentAdapter, CommandMatch } from './AgentAdapter';
 import { createClaudeAdapter, type ClaudeAdapterOptions } from './claude';
 import { createPiAdapter, type PiAdapterOptions } from './pi';
 
@@ -52,6 +52,15 @@ export class AgentRegistry {
   matchCommand(argv: string[]): AgentAdapter | undefined {
     for (const adapter of this.all()) {
       if (adapter.matchCommand(argv)) return adapter;
+    }
+    return undefined;
+  }
+
+  /** The adapter and match result for a command line, if any. */
+  resolveCommand(argv: string[]): { adapter: AgentAdapter; match: CommandMatch } | undefined {
+    for (const adapter of this.all()) {
+      const match = adapter.matchCommand(argv);
+      if (match) return { adapter, match };
     }
     return undefined;
   }

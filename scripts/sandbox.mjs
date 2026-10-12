@@ -23,7 +23,6 @@ if (reset && existsSync(sandbox)) {
 
 const dirs = {
   claude: path.join(sandbox, 'home/.claude'),
-  codex: path.join(sandbox, 'home/.codex'),
   pi: path.join(sandbox, 'home/.pi/agent'),
   storage: path.join(sandbox, 'storage'),
   workspace: path.join(sandbox, 'workspace'),
@@ -51,7 +50,6 @@ const env = {
   ...process.env,
   PATH: [path.join(root, 'test/bin'), process.env.PATH ?? ''].join(path.delimiter),
   CLAUDE_CONFIG_DIR: dirs.claude,
-  CODEX_HOME: dirs.codex,
   PI_CODING_AGENT_DIR: dirs.pi,
   AGENT_SESSIONS_STORAGE_DIR: dirs.storage,
 };

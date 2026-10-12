@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { SessionFileInfo, SessionRecord } from '../model/types';
-import { expandHome, homeDir } from '../util/paths';
+import { expandHome, homeDir, pathsEqual } from '../util/paths';
 import {
   applyResumeTemplate,
   type AgentAdapter,
@@ -154,8 +154,12 @@ export function createClaudeAdapter(options: ClaudeAdapterOptions = {}): AgentAd
       return info;
     },
 
-    fileBelongsToCwd(filePath: string, _info: SessionFileInfo, cwd: string): boolean {
-      return matchesProjectDir(path.basename(path.dirname(filePath)), cwd);
+    fileBelongsToCwd(filePath: string, info: SessionFileInfo, cwd: string): boolean {
+      const dirName = path.basename(path.dirname(filePath));
+      if (matchesProjectDir(dirName, cwd)) return true;
+      // The transcript's own cwd survives symlinked paths (/var vs /private/var).
+      if (info.cwd && pathsEqual(info.cwd, cwd)) return true;
+      return false;
     },
 
     async transcriptPathFor(record: SessionRecord): Promise<string | undefined> {

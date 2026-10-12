@@ -6,8 +6,9 @@ const Mocha = require('mocha');
  * Add more test files here as milestones land.
  */
 async function run() {
-  const mocha = new Mocha({ ui: 'bdd', color: true, timeout: 60000 });
+  const mocha = new Mocha({ ui: 'tdd', color: true, timeout: 60000 });
   mocha.addFile(path.join(__dirname, 'activation.test.cjs'));
+  mocha.addFile(path.join(__dirname, 'capture.test.cjs'));
 
   await new Promise((resolve, reject) => {
     mocha.run((failures) => {

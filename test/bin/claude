@@ -1,0 +1,70 @@
+#!/usr/bin/env node
+'use strict';
+
+// Fake Claude Code for sandbox and integration tests. It never calls the real
+// agent and writes only under CLAUDE_CONFIG_DIR (or ~/.claude if unset).
+const { randomUUID } = require('node:crypto');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const readline = require('node:readline');
+
+function parseArgs(argv) {
+  const out = { sessionId: undefined, name: undefined, resume: undefined, cont: false };
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === '--session-id') out.sessionId = argv[++i];
+    else if (arg.startsWith('--session-id=')) out.sessionId = arg.slice('--session-id='.length);
+    else if (arg === '--name' || arg === '-n') out.name = argv[++i];
+    else if (arg.startsWith('--name=')) out.name = arg.slice('--name='.length);
+    else if (arg === '--resume' || arg === '-r') out.resume = argv[++i];
+    else if (arg === '--continue' || arg === '-c') out.cont = true;
+  }
+  return out;
+}
+
+const args = parseArgs(process.argv.slice(2));
+const cwd = process.cwd();
+const configDir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+const projectDir = path.join(configDir, 'projects', cwd.replace(/[^A-Za-z0-9]/g, '-'));
+let sessionId = args.sessionId || args.resume || randomUUID();
+
+function fileFor(id) {
+  return path.join(projectDir, `${id}.jsonl`);
+}
+
+function append(id, text) {
+  fs.mkdirSync(projectDir, { recursive: true });
+  const line = {
+    type: 'user',
+    sessionId: id,
+    cwd,
+    gitBranch: 'HEAD',
+    version: 'fake',
+    isMeta: false,
+    timestamp: new Date().toISOString(),
+    message: { role: 'user', content: text },
+  };
+  fs.appendFileSync(fileFor(id), `${JSON.stringify(line)}\n`);
+}
+
+process.stdout.write(`Claude Code (fake) session ${sessionId}\n`);
+if (args.name) process.stdout.write(`name: ${args.name}\n`);
+if (args.resume) process.stdout.write(`resumed ${args.resume}\n`);
+process.stdout.write('> ');
+
+const rl = readline.createInterface({ input: process.stdin });
+rl.on('line', (line) => {
+  if (line === '/exit' || line === '/quit') {
+    rl.close();
+    return;
+  }
+  if (line === '/clear') {
+    sessionId = randomUUID();
+    process.stdout.write(`new session ${sessionId}\n> `);
+    return;
+  }
+  append(sessionId, line);
+  process.stdout.write('> ');
+});
+rl.on('close', () => process.exit(0));
