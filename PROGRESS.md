@@ -9,7 +9,7 @@ The coding agent keeps this file up to date. Tick a milestone only when its "Don
 - [x] M3 Adapters — command-line matching (25+ cases) and session-file readers for claude, codex, pi
 - [x] M4 Capture — terminal monitor, folder watcher, correlator; records appear within 5 s of the first prompt
 - [x] M5 Restore — interrupted detection, startup prompt, Restore all, status bar item, `missing` handling
-- [ ] M6 UI — sidebar tree, history page, rename, pin, archive, copy command, open transcript
+- [x] M6 UI — sidebar tree, history page, rename, pin, archive, copy command, open transcript
 - [ ] M7 Exact capture — launchers, hook installer and uninstaller, hook bridge, process-tree matching, import existing
 
 ## Owner testing
@@ -77,6 +77,16 @@ Sections of `docs/TESTING.md` the owner can run after each milestone:
 - `src/restore/StartupRestore.ts`: runs on activation, applies `restoreOnStartup` (`prompt`/`always`/`never`), filters to the current workspace, and offers **Restore all** / **Choose…** / **Dismiss**.
 - `agentSessions.resume` and `agentSessions.restoreInterrupted` are now real commands; the status bar refreshes on store changes.
 - Integration tests: a session with a deleted transcript becomes `missing`; a session with a live transcript reopens in a terminal named after it and returns to `running`. The startup notification/status bar run at activation, so their logic is covered by the `detectInterrupted` unit tests rather than the integration run.
+
+### M6 UI
+
+- `src/ui/query.ts`: pure `filterSessions` (text/agent/status/workspace/date range, sort) used by the history page. Unit-tested with 500 synthetic records; the filter runs in well under 100 ms.
+- `src/ui/SessionTreeProvider.ts`: groups **Interrupted**, **Running**, **This workspace**, **All workspaces**, pinned first, agent badge icon, relative time, rich tooltip, and Resume on click.
+- `src/ui/HistoryPanel.ts` + `media/history.{html,css,js}`: webview with search, agent/status/workspace/date filters, sortable columns, multi-select Resume selected, per-row actions, and a `WebviewPanelSerializer`. Uses VS Code theme variables and text badges (C / π) rather than fixed colours.
+- `src/ui/SessionCommands.ts`: Rename, Pin/Unpin, Archive, Copy resume command, Open transcript, Show terminal, Delete record (with confirmation). Registered as commands and reused by the webview.
+- Manifest: `view/item/context` menus for the inline and context actions; `openHistory`/`refresh` wired; tree and history refresh on every store change.
+- Integration tests: pin/archive, copy resume command (clipboard), open transcript, and opening + refreshing the history webview panel.
+- The Rename prompt is interactive (`showInputBox`), so the write itself is covered by the M2 store tests and the command/webview wiring by the integration run.
 
 ## Decisions
 

@@ -1,0 +1,147 @@
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  z-index: 1;
+}
+
+input,
+select,
+button {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 2px;
+  padding: 3px 6px;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+#search {
+  flex: 1 1 260px;
+}
+
+button {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  cursor: pointer;
+  padding: 4px 10px;
+}
+
+button:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+#count {
+  opacity: 0.7;
+}
+
+main {
+  padding: 0 12px 24px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.2));
+  vertical-align: top;
+}
+
+th {
+  position: sticky;
+  top: 49px;
+  background: var(--vscode-editor-background);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+th.select,
+td.select {
+  width: 24px;
+}
+
+th.actions,
+td.actions {
+  white-space: nowrap;
+}
+
+tr:hover td {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.title {
+  font-weight: 600;
+}
+
+.sub {
+  opacity: 0.75;
+  font-size: 0.9em;
+}
+
+.badge {
+  display: inline-block;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 0.85em;
+  background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+
+.status {
+  text-transform: capitalize;
+}
+
+.status-interrupted {
+  color: var(--vscode-editorWarning-foreground, #cca700);
+}
+.status-running {
+  color: var(--vscode-charts-green, #89d185);
+}
+.status-missing {
+  color: var(--vscode-errorForeground, #f48771);
+}
+
+.row-action {
+  background: transparent;
+  color: var(--vscode-textLink-foreground);
+  padding: 0 4px;
+}
+
+.row-action:hover {
+  background: transparent;
+  text-decoration: underline;
+}
+
+#empty {
+  opacity: 0.7;
+  display: none;
+}

@@ -12,24 +12,17 @@ import { StatusBar } from './restore/StatusBar';
 import { SessionStore } from './store/SessionStore';
 import { resolveStorageDir } from './store/storageDir';
 import { activationMessage } from './util/activation';
+import { HistoryPanel, type HistoryHost } from './ui/HistoryPanel';
+import { SessionCommands, type SessionAction } from './ui/SessionCommands';
 import { SessionTreeProvider } from './ui/SessionTreeProvider';
 
-/** Commands contributed in package.json, registered here as stubs until M6/M7. */
+/** Commands still stubbed until milestone 7 (launchers and hooks). */
 const STUB_COMMANDS = [
-  'agentSessions.openHistory',
-  'agentSessions.refresh',
   'agentSessions.newSession',
   'agentSessions.newClaude',
   'agentSessions.newPi',
-  'agentSessions.rename',
-  'agentSessions.togglePin',
-  'agentSessions.archive',
   'agentSessions.installHooks',
   'agentSessions.uninstallHooks',
-  'agentSessions.copyResumeCommand',
-  'agentSessions.openTranscript',
-  'agentSessions.showTerminal',
-  'agentSessions.deleteRecord',
   'agentSessions.importExisting',
 ] as const;
 
@@ -61,6 +54,12 @@ function workspaceFolderFor(cwd: string): { folder?: string; name?: string } | u
   const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(cwd));
   if (!folder) return undefined;
   return { folder: folder.uri.fsPath, name: folder.name };
+}
+
+function recordFromSessionId(id: string, store: SessionStore): SessionRecord | undefined {
+  const slash = id.indexOf('/');
+  if (slash <= 0) return undefined;
+  return store.get(id.slice(0, slash), id.slice(slash + 1));
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -108,10 +107,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push({ dispose: () => void watcher.dispose() });
   watcher.start().catch((error) => log().error(`session watcher failed: ${String(error)}`));
 
-  const treeProvider = new SessionTreeProvider();
-  context.subscriptions.push(
-    vscode.window.registerTreeDataProvider('agentSessions.tree', treeProvider),
-  );
+  const resumeTemplateFor = (agent: string): string | undefined => {
+    const value = settings().get<string>(`agents.${agent}.resumeCommand`);
+    return value && value.trim() ? value : undefined;
+  };
 
   const restorer = new Restorer({
     store,
@@ -119,18 +118,65 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     logger: log(),
     windowSessionId: vscode.env.sessionId,
     terminalLocation: settings().get<'panel' | 'editor'>('terminalLocation') ?? 'panel',
-    resumeTemplateFor: (agent) => {
-      const value = settings().get<string>(`agents.${agent}.resumeCommand`);
-      return value && value.trim() ? value : undefined;
-    },
+    resumeTemplateFor,
   });
+
+  const treeProvider = new SessionTreeProvider(store, registry);
+  context.subscriptions.push(
+    vscode.window.registerTreeDataProvider('agentSessions.tree', treeProvider),
+  );
 
   const statusBar = new StatusBar();
   context.subscriptions.push(statusBar);
-  const refreshStatusBar = (): void => {
+
+  const refreshUi = (): void => {
     statusBar.update(store.all().filter((record) => record.status === 'interrupted').length);
+    treeProvider.refresh();
+    HistoryPanel.current?.refresh();
   };
-  context.subscriptions.push({ dispose: store.onDidChange(refreshStatusBar) });
+
+  const commands = new SessionCommands({
+    store,
+    registry,
+    restorer,
+    resumeTemplateFor,
+    refresh: refreshUi,
+  });
+  commands.register(context);
+
+  const historyHost: HistoryHost = {
+    records: () => store.all(),
+    workspaceFolders: () =>
+      (vscode.workspace.workspaceFolders ?? []).map((folder) => ({
+        path: folder.uri.fsPath,
+        name: folder.name,
+      })),
+    resumeMany: async (ids) => {
+      const records = ids
+        .map((id) => recordFromSessionId(id, store))
+        .filter((record): record is SessionRecord => record !== undefined);
+      await restorer.resumeMany(records);
+    },
+    perform: (action, agent, sessionId) =>
+      commands.perform(action as SessionAction, agent, sessionId),
+    importExisting: () => {
+      // Filled in by milestone 7.
+    },
+  };
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('agentSessions.openHistory', () =>
+      HistoryPanel.createOrShow(context.extensionUri, historyHost),
+    ),
+    vscode.commands.registerCommand('agentSessions.refresh', refreshUi),
+    vscode.window.registerWebviewPanelSerializer('agentSessions.history', {
+      async deserializeWebviewPanel(panel) {
+        await HistoryPanel.revive(panel, context.extensionUri, historyHost);
+      },
+    }),
+  );
+
+  context.subscriptions.push({ dispose: store.onDidChange(refreshUi) });
 
   const startup = new StartupRestore({
     store,
@@ -143,7 +189,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   const resolveRecord = (arg: unknown): SessionRecord | undefined => {
     if (!arg || typeof arg !== 'object') return undefined;
-    const candidate = arg as { record?: SessionRecord; agent?: string; sessionId?: string } & Partial<SessionRecord>;
+    const candidate = arg as { record?: SessionRecord; agent?: string; sessionId?: string } &
+      Partial<SessionRecord>;
     if (candidate.record) return candidate.record;
     if (candidate.agent && candidate.sessionId) {
       return store.get(candidate.agent, candidate.sessionId) ?? (candidate as SessionRecord);

@@ -131,6 +131,48 @@
           "when": "view == agentSessions.tree",
           "group": "navigation@3"
         }
+      ],
+      "view/item/context": [
+        {
+          "command": "agentSessions.resume",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "inline@1"
+        },
+        {
+          "command": "agentSessions.rename",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "inline@2"
+        },
+        {
+          "command": "agentSessions.togglePin",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "inline@3"
+        },
+        {
+          "command": "agentSessions.copyResumeCommand",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "1_session@1"
+        },
+        {
+          "command": "agentSessions.openTranscript",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "1_session@2"
+        },
+        {
+          "command": "agentSessions.showTerminal",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "1_session@3"
+        },
+        {
+          "command": "agentSessions.archive",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "2_manage@1"
+        },
+        {
+          "command": "agentSessions.deleteRecord",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "2_manage@2"
+        }
       ]
     },
     "configuration": {

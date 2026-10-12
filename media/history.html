@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src {{csp}} 'unsafe-inline'; script-src {{csp}};"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{{style}}" />
+    <title>Agent Session History</title>
+  </head>
+  <body>
+    <header>
+      <input id="search" type="search" placeholder="Search title, folder, branch, session id" />
+      <select id="agent"><option value="">All agents</option></select>
+      <select id="status"><option value="">All statuses</option></select>
+      <select id="workspace"><option value="">All workspaces</option></select>
+      <input id="from" type="date" title="Last active from" />
+      <input id="to" type="date" title="Last active to" />
+      <button id="resume-selected">Resume selected</button>
+      <span id="count"></span>
+    </header>
+    <main>
+      <table>
+        <thead>
+          <tr>
+            <th class="select"><input id="select-all" type="checkbox" /></th>
+            <th data-sort="title">Title</th>
+            <th data-sort="agent">Agent</th>
+            <th>Folder</th>
+            <th>Branch</th>
+            <th data-sort="created">Started</th>
+            <th data-sort="lastActive">Last active</th>
+            <th>Status</th>
+            <th class="actions"></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p id="empty">No sessions match.</p>
+    </main>
+    <script src="{{script}}"></script>
+  </body>
+</html>
