@@ -1,0 +1,271 @@
+{
+  "name": "agent-session-keeper",
+  "displayName": "Agent Session Keeper",
+  "description": "Record Claude Code, Codex and pi terminal sessions and reopen them after a VS Code restart.",
+  "version": "0.0.1",
+  "publisher": "danielbaralt",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.93.0",
+    "node": ">=20"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:agentSessions.tree",
+    "onWebviewPanel:agentSessions.history"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "agentSessions",
+          "title": "Agent Sessions",
+          "icon": "resources/agent-sessions.svg"
+        }
+      ]
+    },
+    "views": {
+      "agentSessions": [
+        {
+          "id": "agentSessions.tree",
+          "name": "Sessions"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "agentSessions.openHistory",
+        "title": "Agent Sessions: Open History",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "agentSessions.refresh",
+        "title": "Agent Sessions: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "agentSessions.newSession",
+        "title": "Agent Sessions: New Session",
+        "icon": "$(add)"
+      },
+      {
+        "command": "agentSessions.resume",
+        "title": "Resume Session",
+        "icon": "$(debug-start)"
+      },
+      {
+        "command": "agentSessions.restoreInterrupted",
+        "title": "Agent Sessions: Restore Interrupted Sessions\u2026"
+      },
+      {
+        "command": "agentSessions.newClaude",
+        "title": "New Claude Code Session"
+      },
+      {
+        "command": "agentSessions.newCodex",
+        "title": "New Codex Session"
+      },
+      {
+        "command": "agentSessions.newPi",
+        "title": "New pi Session"
+      },
+      {
+        "command": "agentSessions.rename",
+        "title": "Rename Session"
+      },
+      {
+        "command": "agentSessions.togglePin",
+        "title": "Pin / Unpin Session"
+      },
+      {
+        "command": "agentSessions.archive",
+        "title": "Archive Session"
+      },
+      {
+        "command": "agentSessions.installHooks",
+        "title": "Agent Sessions: Install Agent Hooks (exact capture)"
+      },
+      {
+        "command": "agentSessions.uninstallHooks",
+        "title": "Agent Sessions: Remove Agent Hooks"
+      },
+      {
+        "command": "agentSessions.copyResumeCommand",
+        "title": "Copy Resume Command"
+      },
+      {
+        "command": "agentSessions.openTranscript",
+        "title": "Open Transcript"
+      },
+      {
+        "command": "agentSessions.showTerminal",
+        "title": "Show Terminal"
+      },
+      {
+        "command": "agentSessions.deleteRecord",
+        "title": "Delete Record"
+      },
+      {
+        "command": "agentSessions.importExisting",
+        "title": "Agent Sessions: Import Existing Sessions"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "agentSessions.openHistory",
+          "when": "view == agentSessions.tree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "agentSessions.newSession",
+          "when": "view == agentSessions.tree",
+          "group": "navigation@2"
+        },
+        {
+          "command": "agentSessions.refresh",
+          "when": "view == agentSessions.tree",
+          "group": "navigation@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Agent Sessions",
+      "properties": {
+        "agentSessions.storageDir": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Where session records, the hook spool and the hook script live. Defaults to `~/.agent-sessions`. The `AGENT_SESSIONS_STORAGE_DIR` environment variable takes precedence when set."
+        },
+        "agentSessions.restoreOnStartup": {
+          "type": "string",
+          "enum": [
+            "prompt",
+            "always",
+            "never"
+          ],
+          "default": "prompt",
+          "description": "What to do with sessions that were interrupted when VS Code closed."
+        },
+        "agentSessions.agents.claude.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Capture Claude Code sessions."
+        },
+        "agentSessions.agents.codex.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Capture Codex sessions."
+        },
+        "agentSessions.agents.pi.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Capture pi sessions."
+        },
+        "agentSessions.agents.claude.commandPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "claude"
+          ],
+          "description": "Commands and aliases that start Claude Code."
+        },
+        "agentSessions.agents.codex.commandPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "codex"
+          ],
+          "description": "Commands and aliases that start Codex."
+        },
+        "agentSessions.agents.pi.commandPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "pi"
+          ],
+          "description": "Commands and aliases that start pi."
+        },
+        "agentSessions.agents.claude.resumeCommand": {
+          "type": "string",
+          "default": "claude --resume ${sessionId}",
+          "description": "Template used to resume a Claude Code session. Supports ${sessionId}, ${cwd} and ${title}."
+        },
+        "agentSessions.agents.codex.resumeCommand": {
+          "type": "string",
+          "default": "codex resume ${sessionId}",
+          "description": "Template used to resume a Codex session. Supports ${sessionId}, ${cwd} and ${title}."
+        },
+        "agentSessions.agents.pi.resumeCommand": {
+          "type": "string",
+          "default": "pi --session ${sessionId}",
+          "description": "Template used to resume a pi session. Supports ${sessionId}, ${cwd} and ${title}."
+        },
+        "agentSessions.agents.claude.sessionRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Override the Claude session folder. Empty uses CLAUDE_CONFIG_DIR or ~/.claude."
+        },
+        "agentSessions.agents.codex.sessionRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Override the Codex session folder. Empty uses CODEX_HOME or ~/.codex."
+        },
+        "agentSessions.agents.pi.sessionRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Override the pi session folder. Empty uses PI_CODING_AGENT_DIR or ~/.pi."
+        },
+        "agentSessions.titleFromFirstPrompt": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the first prompt as the session title when the agent gives no name. Turn off if prompts may contain secrets."
+        },
+        "agentSessions.terminalLocation": {
+          "type": "string",
+          "enum": [
+            "panel",
+            "editor"
+          ],
+          "default": "panel",
+          "description": "Where resumed terminals open."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "check": "tsc --noEmit",
+    "build": "npm run check && node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "test": "vitest run",
+    "test:integration": "node ./test/integration/run.mjs",
+    "sandbox": "node ./scripts/sandbox.mjs",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.93.0",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.0",
+    "mocha": "^10.8.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
