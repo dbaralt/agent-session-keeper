@@ -188,4 +188,39 @@ describe('Correlator', () => {
     await correlator.onLaunch(launch({ terminalKey: 't2' }));
     expect(correlator.pendingLaunches()).toHaveLength(1);
   });
+
+  it('binds exactly from a hook event and links a /clear switch', async () => {
+    const { correlator } = await setup();
+    await correlator.onLaunch(launch());
+    clock += 500;
+
+    const first = await correlator.onHookEvent({
+      agent: 'claude',
+      event: 'SessionStart',
+      session_id: 's1',
+      cwd: '/p/api',
+      transcript_path: '/tmp/s1.jsonl',
+      ts: iso(),
+    });
+    expect(first).toMatchObject({
+      sessionId: 's1',
+      status: 'running',
+      bindingConfidence: 'exact',
+      launch: { via: 'hook' },
+    });
+    expect(correlator.terminalSessionKey('t1')).toBe('claude/s1');
+
+    clock += 1000;
+    const second = await correlator.onHookEvent({
+      agent: 'claude',
+      event: 'SessionStart',
+      source: 'clear',
+      session_id: 's2',
+      cwd: '/p/api',
+      transcript_path: '/tmp/s2.jsonl',
+      terminalId: 'claude/s1',
+      ts: iso(),
+    });
+    expect(second).toMatchObject({ sessionId: 's2', parentSessionId: 's1' });
+  });
 });

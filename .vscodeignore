@@ -3,6 +3,8 @@ dist/
 out/
 .vscode-test/
 .sandbox/
+.vscode/
+src/
 docs/
 test/
 scripts/
@@ -11,3 +13,4 @@ scripts/
 *.map
 *.ts
 !dist/extension.js
+!resources/pi-extension.ts

@@ -1,9 +1,14 @@
 import * as vscode from 'vscode';
 import { hostname } from 'node:os';
+import path from 'node:path';
 import { createDefaultRegistry, type AgentConfig, type AgentRegistry } from './agents/registry';
+import { Launcher } from './agents/launcher';
 import { Correlator } from './capture/Correlator';
+import { HookSpoolReader } from './capture/HookSpoolReader';
 import { SessionDirWatcher } from './capture/SessionDirWatcher';
 import { TerminalMonitor } from './capture/TerminalMonitor';
+import { HooksInstaller } from './hooks/installer';
+import { importExisting } from './import/importExisting';
 import { initLog, log } from './log';
 import type { SessionRecord } from './model/types';
 import { Restorer } from './restore/Restorer';
@@ -16,16 +21,7 @@ import { HistoryPanel, type HistoryHost } from './ui/HistoryPanel';
 import { SessionCommands, type SessionAction } from './ui/SessionCommands';
 import { SessionTreeProvider } from './ui/SessionTreeProvider';
 
-/** Commands still stubbed until milestone 7 (launchers and hooks). */
-const STUB_COMMANDS = [
-  'agentSessions.newSession',
-  'agentSessions.newClaude',
-  'agentSessions.newPi',
-  'agentSessions.installHooks',
-  'agentSessions.uninstallHooks',
-  'agentSessions.importExisting',
-] as const;
-
+/** Commands registered by name in package.json; all have real handlers as of M7. */
 function settings() {
   return vscode.workspace.getConfiguration('agentSessions');
 }
@@ -107,6 +103,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push({ dispose: () => void watcher.dispose() });
   watcher.start().catch((error) => log().error(`session watcher failed: ${String(error)}`));
 
+  const spool = new HookSpoolReader({
+    spoolDir: path.join(storageDir, 'spool'),
+    logger: log(),
+    onEvent: (event) => {
+      void correlator.onHookEvent(event);
+    },
+  });
+  context.subscriptions.push({ dispose: () => void spool.dispose() });
+  spool.start().catch((error) => log().error(`hook spool reader failed: ${String(error)}`));
+
   const resumeTemplateFor = (agent: string): string | undefined => {
     const value = settings().get<string>(`agents.${agent}.resumeCommand`);
     return value && value.trim() ? value : undefined;
@@ -144,6 +150,35 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   });
   commands.register(context);
 
+  const launcher = new Launcher({
+    store,
+    registry,
+    windowSessionId: vscode.env.sessionId,
+    machine: hostname(),
+    terminalLocation: settings().get<'panel' | 'editor'>('terminalLocation') ?? 'panel',
+    logger: log(),
+  });
+
+  const installer = new HooksInstaller({
+    storageDir,
+    hookSourcePath: context.asAbsolutePath('resources/hook.js'),
+    piExtensionSourcePath: context.asAbsolutePath('resources/pi-extension.ts'),
+    logger: log(),
+  });
+
+  const runImport = async (): Promise<void> => {
+    const count = await importExisting({
+      store,
+      registry,
+      machine: hostname(),
+      windowSessionId: vscode.env.sessionId,
+      workspaceFolderFor,
+      logger: log(),
+    });
+    refreshUi();
+    void vscode.window.showInformationMessage(`Agent Sessions: imported ${count} session(s).`);
+  };
+
   const historyHost: HistoryHost = {
     records: () => store.all(),
     workspaceFolders: () =>
@@ -159,9 +194,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     },
     perform: (action, agent, sessionId) =>
       commands.perform(action as SessionAction, agent, sessionId),
-    importExisting: () => {
-      // Filled in by milestone 7.
-    },
+    importExisting: runImport,
   };
 
   context.subscriptions.push(
@@ -169,6 +202,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       HistoryPanel.createOrShow(context.extensionUri, historyHost),
     ),
     vscode.commands.registerCommand('agentSessions.refresh', refreshUi),
+    vscode.commands.registerCommand('agentSessions.newSession', () => launcher.newSession()),
+    vscode.commands.registerCommand('agentSessions.newClaude', () => launcher.launch('claude')),
+    vscode.commands.registerCommand('agentSessions.newPi', () => launcher.launch('pi')),
+    vscode.commands.registerCommand('agentSessions.installHooks', async () => {
+      await installer.install();
+      void vscode.window.showInformationMessage(
+        'Agent Sessions: hooks installed. Codex-style trust review may be needed once per agent.',
+      );
+    }),
+    vscode.commands.registerCommand('agentSessions.uninstallHooks', async () => {
+      await installer.uninstall();
+      void vscode.window.showInformationMessage('Agent Sessions: hooks removed.');
+    }),
+    vscode.commands.registerCommand('agentSessions.importExisting', runImport),
     vscode.window.registerWebviewPanelSerializer('agentSessions.history', {
       async deserializeWebviewPanel(panel) {
         await HistoryPanel.revive(panel, context.extensionUri, historyHost);
@@ -216,17 +263,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       await startup.chooseAndResume(interrupted);
     }),
   );
-
-  for (const command of STUB_COMMANDS) {
-    context.subscriptions.push(
-      vscode.commands.registerCommand(command, () => {
-        log().info(`command "${command}" is not implemented yet`);
-        void vscode.window.showInformationMessage(
-          'Agent Session Keeper: this command is not implemented yet.',
-        );
-      }),
-    );
-  }
 
   log().info('activated');
 }

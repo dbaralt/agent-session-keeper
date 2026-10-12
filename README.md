@@ -8,15 +8,15 @@ The agents already save their conversations and can resume them by ID. What a
 restart destroys is only the link between a terminal and its session ID, so the
 extension keeps that link and replays the agent's own resume command.
 
-- Full spec: [`docs/SPEC.md`](docs/SPEC.md)
-- Manual test guide: [`docs/TESTING.md`](docs/TESTING.md)
-- Screen mockups: [`docs/design/`](docs/design/)
-- Build order and status: [`PROGRESS.md`](PROGRESS.md)
+- Full spec: `docs/SPEC.md`
+- Manual test guide: `docs/TESTING.md`
+- Screen mockups: `docs/design/`
+- Build order and status: `PROGRESS.md`
 
 ## Storage
 
 Session records live in one global history folder shared by every project and
-VS Code window. See the decision in [`PROGRESS.md`](PROGRESS.md#decisions) for
+VS Code window. See the decision in `PROGRESS.md` (Decisions) for
 the rationale and how the path is resolved. Build with `AGENT_SESSIONS_STORAGE_DIR`
 set to override it (used by the sandbox and integration tests).
 
@@ -39,4 +39,4 @@ Adding another agent is one adapter file implementing `AgentAdapter` plus one
 
 ## Status
 
-See [`PROGRESS.md`](PROGRESS.md) for the milestone checklist and notes.
+See `PROGRESS.md` for the milestone checklist and notes.

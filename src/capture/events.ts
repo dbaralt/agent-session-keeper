@@ -12,3 +12,16 @@ export interface SessionFileEvent {
   /** True the first time this file is seen in this extension session. */
   isNew: boolean;
 }
+
+/** One line from `spool/events-*.jsonl`, written by the hook bridge. */
+export interface HookEvent {
+  agent: string;
+  event: string;
+  source?: string;
+  session_id?: string;
+  transcript_path?: string;
+  cwd?: string;
+  ts?: string;
+  terminalId?: string;
+  ancestorPids?: number[];
+}

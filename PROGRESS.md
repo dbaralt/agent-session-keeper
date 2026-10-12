@@ -10,7 +10,7 @@ The coding agent keeps this file up to date. Tick a milestone only when its "Don
 - [x] M4 Capture — terminal monitor, folder watcher, correlator; records appear within 5 s of the first prompt
 - [x] M5 Restore — interrupted detection, startup prompt, Restore all, status bar item, `missing` handling
 - [x] M6 UI — sidebar tree, history page, rename, pin, archive, copy command, open transcript
-- [ ] M7 Exact capture — launchers, hook installer and uninstaller, hook bridge, process-tree matching, import existing
+- [x] M7 Exact capture — launchers, hook installer and uninstaller, hook bridge, process-tree matching, import existing
 
 ## Owner testing
 
@@ -87,6 +87,18 @@ Sections of `docs/TESTING.md` the owner can run after each milestone:
 - Manifest: `view/item/context` menus for the inline and context actions; `openHistory`/`refresh` wired; tree and history refresh on every store change.
 - Integration tests: pin/archive, copy resume command (clipboard), open transcript, and opening + refreshing the history webview panel.
 - The Rename prompt is interactive (`showInputBox`), so the write itself is covered by the M2 store tests and the command/webview wiring by the integration run.
+
+### M7 Exact capture
+
+- `src/agents/launcher.ts`: **New Claude Code Session** / **New pi Session** (and the `+` quick pick) generate a UUID, create a named terminal with `AGENT_SESSIONS_TERMINAL_ID`, and write the record immediately so it appears before the first prompt. Both agents support a preset id.
+- `src/hooks/installer.ts`: installs the `SessionStart` / `UserPromptSubmit` / `Stop` hooks into `~/.claude/settings.json` and a pi extension into `~/.pi/agent/extensions/`, copying `hook.js` to `<storage>/bin/hook.js`. It is idempotent; uninstall removes only its own entries and restores the original `settings.json` bytes via a private backup, so install + uninstall is byte-identical.
+- `resources/hook.js`: stdin JSON → one spool line; always exits 0 within milliseconds and prints nothing. `resources/pi-extension.ts`: a real pi extension using `pi.on('session_start'|'agent_start'|'agent_end')`, `ctx.sessionManager.getSessionId()/getSessionFile()` and `ctx.cwd`.
+- `src/capture/HookSpoolReader.ts`: polls `spool/events-*.jsonl`, skips what was there at start, forwards complete lines.
+- `Correlator.onHookEvent`: exact binding by `terminalId`, ancestor pid or pending launch; `SessionStart` with `source: clear|fork` sets `parentSessionId`.
+- `src/import/importExisting.ts`: walks each adapter's session roots and backfills records (`via: import`). Wired to the command and the history page.
+- Ancestor pids are computed inside `hook.js` and the pi extension with `ps` (macOS/Linux). Windows process-tree matching is not implemented; hooks there rely on `terminalId`.
+- Tests: installer byte-identical round trip, `hook.js` spool output, spool reader, import-once, hook correlation; integration tests for the launcher, install/uninstall, import and a spooled hook event.
+- `npm run package` produces `agent-session-keeper-0.0.1.vsix` (~38 KB, 17 files). Packaging needs `--allow-missing-repository` (no remote) and the README's relative links were made plain because `docs/` is not shipped.
 
 ## Decisions
 
@@ -176,11 +188,10 @@ installed on this machine.
 
 ## Environment notes
 
-Checked at handoff (macOS, Apple Silicon):
+Checked at handoff (macOS, Apple Silicon), updated through M7:
 
 - Node v24.14.0, npm 11.9.0, git 2.54.0 — all fine (Node 20+ required).
-- `claude` 2.1.220 installed: supports `--session-id`, `-n/--name`, `-r/--resume`, `--fork-session`.
-- `pi` 1.1.0 installed: supports `--session-id`, `-n/--name`, `--session`, `--fork`, `--session-dir`. Treat pi as `supportsPresetId: true`.
-- `codex` is **not installed** and `~/.codex` does not exist. Codex adapter and hooks still build and are covered by fixtures/fakes, but the real-agent Codex tests in docs/TESTING.md (§4.2, §5 step 2) cannot be run on this machine yet.
-- `code` CLI is **not on PATH**. `npm run sandbox` and `npm run test:integration` need it (or an explicit VS Code executable path). Install via Command Palette → **Shell Command: Install 'code' command in PATH** before running those scripts.
-- `engines.vscode` pinned to `^1.93.0` per spec. `npm install` resolved `@types/vscode` to 1.140.0, which does contain `window.onDidStartTerminalShellExecution` (index.d.ts:11210) and `LogOutputChannel`; only stable APIs are used in M1.
+- `claude` 2.1.220 and `pi` 1.1.0 are installed and both support `--session-id` and `--name`.
+- Integration tests run here: `npm run test:integration` downloads VS Code via `@vscode/test-electron` (no `code` CLI needed). `test/integration/run.mjs` handles the recent macOS binary rename (`Code` instead of `Electron`).
+- `npm run sandbox` still needs the `code` CLI on `PATH` (Command Palette → **Shell Command: Install 'code' command in PATH**); it opens a throwaway Extension Development Host with the fake agents.
+- Codex is intentionally out of scope (decision D4). `docs/SPEC.md` still describes it as it was handed over; D4 supersedes those parts.

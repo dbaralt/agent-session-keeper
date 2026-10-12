@@ -11,6 +11,7 @@ async function run() {
   mocha.addFile(path.join(__dirname, 'capture.test.cjs'));
   mocha.addFile(path.join(__dirname, 'restore.test.cjs'));
   mocha.addFile(path.join(__dirname, 'ui.test.cjs'));
+  mocha.addFile(path.join(__dirname, 'exact-capture.test.cjs'));
 
   await new Promise((resolve, reject) => {
     mocha.run((failures) => {

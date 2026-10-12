@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import type { AgentRegistry } from '../agents/registry';
 import type { SessionRecord } from '../model/types';
 import type { SessionStore, StoreLogger } from '../store/SessionStore';
+import { waitForShellIntegration } from './shellIntegration';
 
 export type ResumeOutcome = 'resumed' | 'missing' | 'cancelled' | 'no-adapter';
 
@@ -13,26 +14,6 @@ export interface RestorerOptions {
   windowSessionId: string;
   terminalLocation: 'panel' | 'editor';
   resumeTemplateFor?: (agent: string) => string | undefined;
-}
-
-async function waitForShellIntegration(
-  terminal: vscode.Terminal,
-  timeoutMs: number,
-): Promise<vscode.TerminalShellIntegration | undefined> {
-  if (terminal.shellIntegration) return terminal.shellIntegration;
-  return new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      subscription.dispose();
-      resolve(undefined);
-    }, timeoutMs);
-    const subscription = vscode.window.onDidChangeTerminalShellIntegration((event) => {
-      if (event.terminal === terminal) {
-        clearTimeout(timer);
-        subscription.dispose();
-        resolve(event.shellIntegration);
-      }
-    });
-  });
 }
 
 /** Reopens one or many recorded sessions in new terminals. */

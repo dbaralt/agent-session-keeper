@@ -1,4 +1,5 @@
 import path from 'node:path';
+import type { AgentAdapter } from '../agents/AgentAdapter';
 import type { AgentRegistry } from '../agents/registry';
 import {
   parseSessionKey,
@@ -11,7 +12,7 @@ import {
   type TitleSource,
 } from '../model/types';
 import type { SessionStore, StoreLogger } from '../store/SessionStore';
-import type { SessionFileEvent } from './events';
+import type { HookEvent, SessionFileEvent } from './events';
 
 export interface WorkspaceInfo {
   folder?: string;
@@ -67,6 +68,7 @@ export class Correlator {
 
   private readonly pending: PendingLaunch[] = [];
   private readonly terminalSessions = new Map<string, string>();
+  private readonly terminalPids = new Map<string, number>();
   private readonly lastActivityWrite = new Map<string, number>();
 
   constructor(options: CorrelatorOptions) {
@@ -86,6 +88,55 @@ export class Correlator {
 
   terminalSessionKey(terminalKey: string): string | undefined {
     return this.terminalSessions.get(terminalKey);
+  }
+
+  /** Remember a terminal's shell pid so hook events can be matched by ancestry. */
+  registerTerminal(terminalKey: string, shellPid?: number): void {
+    if (shellPid !== undefined) this.terminalPids.set(terminalKey, shellPid);
+  }
+
+  /** An exact-capture hook event arrived on the spool. */
+  async onHookEvent(event: HookEvent): Promise<SessionRecord | undefined> {
+    const adapter = this.registry.get(event.agent);
+    const sessionId = event.session_id;
+    if (!adapter || !sessionId) return undefined;
+
+    const cwd = event.cwd ?? '';
+    const filePath = event.transcript_path ?? '';
+    const info: SessionFileInfo = { sessionId };
+    if (cwd) info.cwd = cwd;
+
+    const pending = this.takePendingForHook(event.agent, adapter, info, filePath);
+    const terminalKey = pending?.terminalKey ?? this.terminalKeyForHook(event);
+
+    let parentSessionId: string | undefined;
+    if (terminalKey && (event.source === 'clear' || event.source === 'fork')) {
+      const parsed = parseSessionKey(this.terminalSessions.get(terminalKey) ?? '');
+      if (parsed && parsed.sessionId !== sessionId) parentSessionId = parsed.sessionId;
+    }
+
+    const launch: PendingLaunch = {
+      terminalKey: terminalKey ?? '',
+      agent: event.agent,
+      cwd,
+      commandLine: `(hook ${event.event})`,
+      startedAt: event.ts ?? new Date(this.now()).toISOString(),
+      isResume: false,
+      via: 'hook',
+    };
+
+    const params: BindParams = {
+      agent: event.agent,
+      sessionId,
+      cwd,
+      launch,
+      confidence: 'exact',
+      info,
+    };
+    if (terminalKey) params.terminalKey = terminalKey;
+    if (filePath) params.filePath = filePath;
+    if (parentSessionId) params.parentSessionId = parentSessionId;
+    return this.bind(params);
   }
 
   /** A command line was recognized as starting an agent. */
@@ -344,6 +395,33 @@ export class Correlator {
   private terminalForSession(key: string): string | undefined {
     for (const [terminalKey, sessionKeyValue] of this.terminalSessions) {
       if (sessionKeyValue === key) return terminalKey;
+    }
+    return undefined;
+  }
+
+  private takePendingForHook(
+    agent: string,
+    adapter: AgentAdapter,
+    info: SessionFileInfo,
+    filePath: string,
+  ): PendingLaunch | undefined {
+    const index = this.pending.findIndex(
+      (launch) => launch.agent === agent && adapter.fileBelongsToCwd(filePath, info, launch.cwd),
+    );
+    if (index < 0) return undefined;
+    return this.pending.splice(index, 1)[0];
+  }
+
+  private terminalKeyForHook(event: HookEvent): string | undefined {
+    if (event.terminalId) {
+      for (const [terminalKey, value] of this.terminalSessions) {
+        if (value === event.terminalId) return terminalKey;
+      }
+    }
+    if (event.ancestorPids) {
+      for (const [terminalKey, pid] of this.terminalPids) {
+        if (event.ancestorPids.includes(pid)) return terminalKey;
+      }
     }
     return undefined;
   }

@@ -1,6 +1,6 @@
 # Testing Agent Session Keeper yourself
 
-This guide is for you, the owner, once the coding agent says a milestone is ready. `PROGRESS.md` lists which sections apply after each milestone. Start with the sandbox (section 3.1): it uses fake agents and throwaway folders, so nothing you do there can touch your real Claude Code, Codex or pi history.
+This guide is for you, the owner, once the coding agent says a milestone is ready. `PROGRESS.md` lists which sections apply after each milestone. Start with the sandbox (section 3.1): it uses fake agents and throwaway folders, so nothing you do there can touch your real Claude Code or pi history.
 
 ## 1. Before you start
 
@@ -9,7 +9,7 @@ You need:
 - VS Code with the `code` command on your `PATH`. On macOS, open the Command Palette (Cmd+Shift+P) and run **Shell Command: Install 'code' command in PATH**.
 - Node.js 20 or newer (`node -v`).
 - git.
-- For the real-agent tests in section 4: whichever of `claude`, `codex` and `pi` you use, installed and signed in.
+- For the real-agent tests in section 4: `claude` and/or `pi` installed and signed in.
 - A terminal shell VS Code supports for shell integration: zsh, bash, fish or PowerShell.
 
 Check shell integration is on: open a terminal in VS Code, run `echo hi`, then hover the terminal's tab. The hover should say **Shell integration: Rich** (or Basic). If it says None, see section 7.
@@ -42,7 +42,7 @@ npm run sandbox
 
 A separate VS Code window opens on a small sample folder. In this window:
 
-- typing `claude`, `codex` or `pi` in a terminal runs a **fake** agent that only echoes what you type;
+- typing `claude` or `pi` in a terminal runs a **fake** agent that only echoes what you type;
 - all session data goes into the project's `.sandbox/` folder;
 - your real settings, extensions and agent history are not used or changed.
 
@@ -85,13 +85,13 @@ Expected within about 5 seconds of the prompt:
 
 Then run `claude -n "Rename test"` in another terminal and send a prompt. That session should be titled **Rename test**.
 
-### 4.2 Codex and pi sessions are recorded
+### 4.2 A pi session is recorded
 
-Repeat 4.1 with `codex` and with `pi`.
+Repeat 4.1 with `pi`.
 
-Expected: each appears under **Running** with its own badge (X for Codex, π for pi) and a record in `sessions/codex/` or `sessions/pi/`.
+Expected: it appears under **Running** with its own badge (π for pi) and a record in `sessions/pi/`.
 
-Also check these are **not** recorded: `claude -p "hello"`, `codex exec "hello"`, `claude mcp list`, `pi --help`.
+Also check these are **not** recorded: `claude -p "hello"`, `claude mcp list`, `pi --help`, `pi export file.jsonl`.
 
 ### 4.3 Switching sessions and closing terminals
 
@@ -107,7 +107,7 @@ Expected:
 
 ### 4.4 The restart test (the reason this extension exists)
 
-1. Open a project folder. Start two or three agents in separate terminals (for example `claude` and `codex`), and give each one a prompt with something memorable, such as "remember the word pineapple".
+1. Open a project folder. Start two or three agents in separate terminals (for example two `claude` sessions, or `claude` and `pi`), and give each one a prompt with something memorable, such as "remember the word pineapple".
 2. Quit VS Code completely: **Cmd+Q** on macOS, or **File > Exit** on Windows and Linux. Closing the window is not enough.
 3. Reopen VS Code on the same folder.
 
@@ -121,7 +121,7 @@ Expected:
 Expected:
 
 - one new terminal per session, named after the session, each in the folder where it was started;
-- each terminal runs the matching resume command: `claude --resume <id>`, `codex resume <id>` or `pi --session <id>`;
+- each terminal runs the matching resume command: `claude --resume <id>` or `pi --session <id>`;
 - ask each agent "what word did I ask you to remember?" and it answers correctly.
 
 Repeat once using **Choose…** and restore just one session.
@@ -179,10 +179,10 @@ Expected: within a few seconds, the first window's sidebar lists it under **All 
 
 ### 4.10 Starting a session from the extension
 
-1. Click **+** at the top of the sidebar and choose **New Claude Code Session** (also try pi and Codex).
+1. Click **+** at the top of the sidebar and choose **New Claude Code Session** (also try **New pi Session**).
 2. Enter a title and press Enter.
 
-Expected: a terminal named after the title opens and runs `claude --session-id <new id> --name "<title>"` (pi is similar). The session appears in the sidebar immediately, before you type anything. Codex starts without a preset ID and appears after your first prompt.
+Expected: a terminal named after the title opens and runs `claude --session-id <new id> --name "<title>"` (`pi --session-id <new id> --name "<title>"` is similar). The session appears in the sidebar immediately, before you type anything.
 
 ### 4.11 Two sessions in the same folder at once
 
@@ -200,20 +200,17 @@ Hooks make the agents report their session ID to the extension directly. Install
 
 ```bash
 cp ~/.claude/settings.json ~/.claude/settings.json.mybackup 2>/dev/null
-cp ~/.codex/hooks.json ~/.codex/hooks.json.mybackup 2>/dev/null
 ```
 
-1. Run **Agent Sessions: Install Agent Hooks** from the Command Palette.
-2. Start `codex` once and run `/hooks`; review and trust the new hooks (Codex skips untrusted hooks).
-3. Run tests 4.1, 4.3 and 4.11 again. Sessions should now appear as soon as the agent starts, before your first prompt.
-4. Run **Agent Sessions: Remove Agent Hooks**, then check your config files are exactly as before:
+1. Run **Agent Sessions: Install Agent Hooks** from the Command Palette. This adds `SessionStart`, `UserPromptSubmit` and `Stop` hooks to `~/.claude/settings.json` and drops a small extension into `~/.pi/agent/extensions/`.
+2. Run tests 4.1, 4.3 and 4.11 again. Sessions should now appear as soon as the agent starts, before your first prompt (Claude and pi).
+3. Run **Agent Sessions: Remove Agent Hooks**, then check your Claude config is exactly as before:
 
 ```bash
 diff ~/.claude/settings.json ~/.claude/settings.json.mybackup && echo "claude: identical"
-diff ~/.codex/hooks.json ~/.codex/hooks.json.mybackup && echo "codex: identical"
 ```
 
-Expected: both print "identical". If either differs, restore your backup (`cp ….mybackup …`) and report it to the coding agent.
+Expected: it prints "identical". If it differs, restore your backup (`cp ~/.claude/settings.json.mybackup ~/.claude/settings.json`) and report it to the coding agent.
 
 ## 6. Settings worth knowing
 
@@ -239,7 +236,7 @@ Paste these into your agent's chat:
 - which test (for example "4.4 step 4") and what you saw instead of the expected result;
 - the relevant lines from the **Agent Sessions** output log;
 - the session's record file from `~/.agent-sessions/sessions/<agent>/<id>.json`;
-- your OS, shell, VS Code version (**Help > About**) and the agent's version (`claude --version`, `codex --version`, `pi --version`).
+- your OS, shell, VS Code version (**Help > About**) and the agent's version (`claude --version`, `pi --version`).
 
 ## 9. Removing the extension
 

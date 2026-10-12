@@ -72,6 +72,7 @@ export class TerminalMonitor {
     if (resolved.match.name) launch.name = resolved.match.name;
     const shellPid = await terminal.processId;
     if (shellPid !== undefined) launch.shellPid = shellPid;
+    this.correlator.registerTerminal(launch.terminalKey, shellPid);
 
     this.logger?.info(`launch ${resolved.adapter.id} in ${launch.cwd}`);
     await this.correlator.onLaunch(launch);
