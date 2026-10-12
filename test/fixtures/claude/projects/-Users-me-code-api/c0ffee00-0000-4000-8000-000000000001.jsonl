@@ -1,0 +1,5 @@
+{"type":"last-prompt","leafUuid":"leaf-1","sessionId":"c0ffee00-0000-4000-8000-000000000001"}
+{"type":"mode","mode":"normal","sessionId":"c0ffee00-0000-4000-8000-000000000001"}
+{"type":"user","sessionId":"c0ffee00-0000-4000-8000-000000000001","cwd":"/Users/me/code/api","gitBranch":"HEAD","version":"2.1.220","isMeta":true,"timestamp":"2026-01-02T03:04:04.000Z","message":{"role":"user","content":"<command-name>/model</command-name>"}}
+{"type":"user","sessionId":"c0ffee00-0000-4000-8000-000000000001","cwd":"/Users/me/code/api","gitBranch":"feat/auth","version":"2.1.220","isMeta":false,"timestamp":"2026-01-02T03:04:05.000Z","message":{"role":"user","content":"refactor the auth middleware please"}}
+{"type":"assistant","sessionId":"c0ffee00-0000-4000-8000-000000000001","cwd":"/Users/me/code/api","gitBranch":"feat/auth","timestamp":"2026-01-02T03:04:06.000Z","message":{"role":"assistant","content":[{"type":"text","text":"ok"}]}}

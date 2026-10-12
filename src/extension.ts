@@ -13,7 +13,6 @@ const STUB_COMMANDS = [
   'agentSessions.resume',
   'agentSessions.restoreInterrupted',
   'agentSessions.newClaude',
-  'agentSessions.newCodex',
   'agentSessions.newPi',
   'agentSessions.rename',
   'agentSessions.togglePin',

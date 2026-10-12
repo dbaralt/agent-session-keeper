@@ -6,7 +6,7 @@ The coding agent keeps this file up to date. Tick a milestone only when its "Don
 
 - [x] M1 Scaffold — F5 opens an Extension Development Host; the "Agent Sessions" log shows "activated"
 - [x] M2 Model and store — per-file records, atomic writes, field-level merge, cross-window watcher
-- [ ] M3 Adapters — command-line matching (25+ cases) and session-file readers for claude, codex, pi
+- [x] M3 Adapters — command-line matching (25+ cases) and session-file readers for claude, codex, pi
 - [ ] M4 Capture — terminal monitor, folder watcher, correlator; records appear within 5 s of the first prompt
 - [ ] M5 Restore — interrupted detection, startup prompt, Restore all, status bar item, `missing` handling
 - [ ] M6 UI — sidebar tree, history page, rename, pin, archive, copy command, open transcript
@@ -46,6 +46,17 @@ Sections of `docs/TESTING.md` the owner can run after each milestone:
 - `src/extension.ts` now resolves the storage dir, creates the store, logs `storage: <path>` and the record count, and disposes the store.
 - Tests (23 total): create/load/update/delete, merge-by-`updatedAt` with optional fields preserved, no leftover `.tmp` files, cross-window watcher upsert+delete, storage-dir precedence, and **two real child processes** racing to update different fields of one record — both survive.
 - Deviation: the spec's concurrency wording says "two concurrent writer processes"; the test bundles the store with esbuild on the fly and spawns two Node processes (`test/unit/helpers/updateField.ts`) to prove the lock works across processes, not just promises.
+
+### M3 Adapters
+
+- `src/agents/AgentAdapter.ts`: the `AgentAdapter` interface + `applyResumeTemplate`. Adding a harness is one file implementing this plus one `register(...)` line in `src/agents/registry.ts`.
+- `src/agents/registry.ts`: `AgentRegistry` and `createDefaultRegistry`. Adding a harness touches only this file plus the new adapter file.
+- `src/agents/commandLine.ts`: quote-aware tokenizer, wrapper stripping (`env`, assignments, `sudo`, `npx`/`bunx`/`pnpx`, `pnpm dlx`, `npm exec`), flag helpers.
+- `src/agents/claude.ts`: matches `claude`/`claude-code`, ignores `-p`/`--print`/`mcp`/`doctor`/`update`/`config`/help; reads `projects/<encoded-cwd>/<id>.jsonl` (id = filename, cwd/branch/start/first prompt from the head); 200-char folder truncation handled.
+- `src/agents/pi.ts`: matches `pi`/`pi-coding-agent`, ignores `-p`/`--print`/`install`/`export`/`auth`/help; reads `<sessions>/--<cwd>--/<ts>_<id>.jsonl` (header `type:session`, `session_info` name, first user message); cwd check prefers the header.
+- **Codex dropped** per the owner's instruction. `AgentId` is now a plain string, so a Codex adapter can be added later without touching the model, the store or the UI. Removed `agentSessions.newCodex` and all `agents.codex.*` settings.
+- Tests: 113 total; `commandLine` 19, `claude` 40, `pi` 31 — 70+ distinct command lines plus fixture-based readers.
+- Fixtures are synthetic (not copied from real transcripts); the real on-disk layouts were inspected read-only to confirm them.
 
 ## Decisions
 
@@ -117,13 +128,21 @@ function so a future per-project option is a small change:
 If a per-project mode is ever wanted, only `resolveStorageDir` changes; the
 store, spool and hook script keep working unchanged.
 
-### D4 — Agent scope for this machine
+### D4 — Harness scope: claude and pi now, anything later
 
-Build adapters for all three agents (claude, codex, pi) and cover Codex with
-fixtures and fake agents, but only verify claude and pi against the real
-binaries here. Codex is not installed on this machine yet; the owner will run
-Codex tests later. `code` CLI is not on PATH, so the sandbox and integration
-tests cannot be run locally yet.
+Focus on `claude` and `pi`. Codex is explicitly out of scope per the owner, but
+the architecture is harness-agnostic so it (or any other agent) can be added
+later with minimal work:
+
+1. `AgentId` is a plain string; the model, store and UI never hard-code a list
+   of agents. `SessionStore` loads whatever `sessions/<agent>/` folders exist.
+2. All agent-specific behaviour lives behind `AgentAdapter`. A new harness is
+   one file plus one `register(...)` line in `createDefaultRegistry`; it then
+   gets command matching, file reading, capture, restore and UI for free.
+3. Settings and manifest entries are per-agent and can be added the same way.
+
+Only claude and pi are verified against the real binaries here; Codex is not
+installed on this machine.
 
 ## Environment notes
 

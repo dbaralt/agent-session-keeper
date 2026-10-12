@@ -1,5 +1,6 @@
 import { homedir } from 'node:os';
 import path from 'node:path';
+import { expandHome } from '../util/paths';
 
 export interface ResolveStorageDirOptions {
   env?: NodeJS.ProcessEnv;
@@ -7,14 +8,6 @@ export interface ResolveStorageDirOptions {
   settingValue?: string;
   /** Home directory fallback for tests. */
   home?: string;
-}
-
-function expandHome(value: string, home: string): string {
-  if (value === '~') return home;
-  if (value.startsWith(`~${path.sep}`) || value.startsWith('~/')) {
-    return path.join(home, value.slice(2));
-  }
-  return value;
 }
 
 /**

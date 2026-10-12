@@ -1,9 +1,9 @@
+import { readdirSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { watch, type FSWatcher } from 'node:fs';
 import { mkdir, readFile, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import {
-  AGENT_IDS,
   isAgentId,
   isSessionRecord,
   mergeSessionRecords,
@@ -251,10 +251,14 @@ export class SessionStore {
 
   /** Non-recursive fallback for platforms without recursive `fs.watch`. */
   private startFallbackWatcher(): void {
-    const dirs = [
-      this.sessionsDir,
-      ...AGENT_IDS.map((agent) => path.join(this.sessionsDir, agent)),
-    ];
+    const dirs = [this.sessionsDir];
+    try {
+      for (const entry of readdirSync(this.sessionsDir)) {
+        if (isAgentId(entry)) dirs.push(path.join(this.sessionsDir, entry));
+      }
+    } catch {
+      // The sessions folder does not exist yet.
+    }
     for (const dir of dirs) {
       try {
         const watcher = watch(dir, (_event, filename) => {

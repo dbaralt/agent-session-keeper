@@ -1,7 +1,7 @@
 {
   "name": "agent-session-keeper",
   "displayName": "Agent Session Keeper",
-  "description": "Record Claude Code, Codex and pi terminal sessions and reopen them after a VS Code restart.",
+  "description": "Record Claude Code and pi terminal sessions and reopen them after a VS Code restart.",
   "version": "0.0.1",
   "publisher": "danielbaralt",
   "private": true,
@@ -68,10 +68,6 @@
       {
         "command": "agentSessions.newClaude",
         "title": "New Claude Code Session"
-      },
-      {
-        "command": "agentSessions.newCodex",
-        "title": "New Codex Session"
       },
       {
         "command": "agentSessions.newPi",
@@ -160,11 +156,6 @@
           "default": true,
           "description": "Capture Claude Code sessions."
         },
-        "agentSessions.agents.codex.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Capture Codex sessions."
-        },
         "agentSessions.agents.pi.enabled": {
           "type": "boolean",
           "default": true,
@@ -179,16 +170,6 @@
             "claude"
           ],
           "description": "Commands and aliases that start Claude Code."
-        },
-        "agentSessions.agents.codex.commandPatterns": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "codex"
-          ],
-          "description": "Commands and aliases that start Codex."
         },
         "agentSessions.agents.pi.commandPatterns": {
           "type": "array",
@@ -205,11 +186,6 @@
           "default": "claude --resume ${sessionId}",
           "description": "Template used to resume a Claude Code session. Supports ${sessionId}, ${cwd} and ${title}."
         },
-        "agentSessions.agents.codex.resumeCommand": {
-          "type": "string",
-          "default": "codex resume ${sessionId}",
-          "description": "Template used to resume a Codex session. Supports ${sessionId}, ${cwd} and ${title}."
-        },
         "agentSessions.agents.pi.resumeCommand": {
           "type": "string",
           "default": "pi --session ${sessionId}",
@@ -220,15 +196,10 @@
           "default": "",
           "description": "Override the Claude session folder. Empty uses CLAUDE_CONFIG_DIR or ~/.claude."
         },
-        "agentSessions.agents.codex.sessionRoot": {
-          "type": "string",
-          "default": "",
-          "description": "Override the Codex session folder. Empty uses CODEX_HOME or ~/.codex."
-        },
         "agentSessions.agents.pi.sessionRoot": {
           "type": "string",
           "default": "",
-          "description": "Override the pi session folder. Empty uses PI_CODING_AGENT_DIR or ~/.pi."
+          "description": "Override the pi agent folder. Empty uses PI_CODING_AGENT_DIR or ~/.pi/agent."
         },
         "agentSessions.titleFromFirstPrompt": {
           "type": "boolean",

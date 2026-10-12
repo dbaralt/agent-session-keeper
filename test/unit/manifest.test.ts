@@ -59,7 +59,6 @@ describe('package.json manifest', () => {
       'agentSessions.resume',
       'agentSessions.restoreInterrupted',
       'agentSessions.newClaude',
-      'agentSessions.newCodex',
       'agentSessions.newPi',
       'agentSessions.rename',
       'agentSessions.togglePin',
@@ -77,8 +76,8 @@ describe('package.json manifest', () => {
       expect.arrayContaining([
         'agentSessions.storageDir',
         'agentSessions.restoreOnStartup',
-        'agentSessions.agents.claude.commandPatterns',
-        'agentSessions.agents.codex.resumeCommand',
+        'agentSessions.agents.pi.commandPatterns',
+        'agentSessions.agents.pi.resumeCommand',
         'agentSessions.agents.pi.sessionRoot',
         'agentSessions.titleFromFirstPrompt',
         'agentSessions.terminalLocation',

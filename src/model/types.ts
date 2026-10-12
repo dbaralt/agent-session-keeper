@@ -3,8 +3,11 @@
  * these records; nothing agent-specific lives here.
  */
 
-export const AGENT_IDS = ['claude', 'codex', 'pi'] as const;
-export type AgentId = (typeof AGENT_IDS)[number];
+/**
+ * A harness id. Kept as a plain string so adding a harness later is one adapter
+ * file plus one registry entry, with no change to the model or storage.
+ */
+export type AgentId = string;
 
 export const SESSION_STATUSES = [
   'pending',
@@ -102,7 +105,12 @@ export function parseSessionKey(key: string): { agent: AgentId; sessionId: strin
 }
 
 export function isAgentId(value: unknown): value is AgentId {
-  return typeof value === 'string' && (AGENT_IDS as readonly string[]).includes(value);
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    !value.includes('/') &&
+    !value.startsWith('.')
+  );
 }
 
 function isStringArrayOf<T extends string>(value: unknown, allowed: readonly T[]): value is T {
