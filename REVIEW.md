@@ -1,6 +1,22 @@
 # Architecture & Security Review — Agent Session Keeper
 
-> **v0.0.2 verification (below) supersedes the findings for v0.0.1.** All 14 fix-list items were applied in `bb81313`/`8a0bb9c` and verified. Two follow-ups remain, both small: **F1** (chmod existing `~/.agent-sessions` on activation, not only at hook install — the owner's dir created by 0.0.1 is still 0755/0644) and **F2** (drop closed terminals from `TerminalMonitor.terminalsByKey` to avoid a per-window leak). See the "v0.0.2 verification" section.
+> **v0.0.3 verification — all follow-ups applied and verified (commits `9495ec9`/`91c27ab`).** Build ✅ · 167 unit tests ✅ · 16 integration tests ✅ · VSIX packages clean (13 files) ✅. The extension is publishable as-is. Remaining notes are defence-in-depth only (see the end of this section).
+
+---
+
+# v0.0.3 follow-up verification (commit `91c27ab`)
+
+- **F1 ✅** `ensureStoragePermissions` (`src/store/storageDir.ts`) chmods the storage root, `sessions/`, `spool/`, `windows/`, `bin/` to 0700 once per activation; called from `activate()`; per-dir try/catch so a read-only dir never breaks activation. Covered by a new unit test that builds a 0755 tree and asserts the upgrade.
+- **F2 ✅** `onDidCloseTerminal` now deletes the terminal from `terminalsByKey` before notifying the correlator. (Minor behavioural note: for a terminal the monitor never keyed, it now skips the correlator call entirely — equivalent, since the correlator would have found no binding.)
+- **Spool rollover prune ✅** `poll()` re-prunes when the UTC date changes, not just at startup.
+- **README ✅** Windows/PowerShell quoting note added.
+- **PROGRESS.md ✅** follow-ups recorded.
+
+Defence-in-depth observations (optional, not vulnerabilities):
+
+1. `ensureStoragePermissions` upgrades the five top-level dirs but not `sessions/<agent>/` subdirs created by 0.0.1 (e.g. `sessions/claude` at 0755) — these are *effectively* protected because their parent `sessions/` is now 0700, which blocks traversal on POSIX. Walking `sessions/*` in the same loop would be belt-and-braces.
+2. Existing record *files* stay 0644 until rewritten (a rewrite via `writeFileAtomic` produces a 0600 file). Unreachable behind the 0700 parents; optionally chmod files too in `ensureStoragePermissions`.
+3. Ghost `pending` launcher records (agent binary missing) still surface as "interrupted" after restart — was marked optional and remains open.
 
 ---
 

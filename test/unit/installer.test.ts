@@ -39,8 +39,9 @@ describe('claude hook merge helpers', () => {
       model: 'opus',
     };
     const command = '/home/me/.agent-sessions/bin/hook.js';
-    addClaudeHooks(settings, command);
-    addClaudeHooks(settings, command);
+    const spool = '/home/me/.agent-sessions/spool';
+    addClaudeHooks(settings, command, spool);
+    addClaudeHooks(settings, command, spool);
     const sessionStart = (settings.hooks as Record<string, unknown[]>).SessionStart as unknown[];
     expect(sessionStart).toHaveLength(2);
     removeClaudeHooks(settings, command);
@@ -54,7 +55,7 @@ describe('claude hook merge helpers', () => {
 
   it('removes the hooks key entirely when nothing is left', () => {
     const settings: Record<string, unknown> = {};
-    addClaudeHooks(settings, 'hook.js');
+    addClaudeHooks(settings, 'hook.js', '/spool');
     removeClaudeHooks(settings, 'hook.js');
     expect(settings).toEqual({});
   });

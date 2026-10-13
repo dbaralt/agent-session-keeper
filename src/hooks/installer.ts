@@ -25,42 +25,53 @@ export function stableStringify(value: unknown): string {
   return JSON.stringify(value) ?? 'null';
 }
 
-function groupHasCommand(group: unknown, command: string): boolean {
-  if (!isObject(group) || !Array.isArray(group.hooks)) return false;
-  return group.hooks.some(
-    (hook) => isObject(hook) && typeof hook.command === 'string' && hook.command.includes(command),
-  );
+function hookMatches(hook: unknown, hookJsPath: string): boolean {
+  if (!isObject(hook)) return false;
+  if (Array.isArray(hook.args) && hook.args.includes(hookJsPath)) return true;
+  // Legacy bare-path form installed by 0.0.1–0.0.3.
+  return typeof hook.command === 'string' && hook.command.includes(hookJsPath);
 }
 
-export function addClaudeHooks(settings: Json, command: string): void {
+function groupHasCommand(group: unknown, hookJsPath: string): boolean {
+  if (!isObject(group) || !Array.isArray(group.hooks)) return false;
+  return group.hooks.some((hook) => hookMatches(hook, hookJsPath));
+}
+
+export function addClaudeHooks(settings: Json, hookJsPath: string, spoolDir: string): void {
+  // Exec form: Claude runs `node <args>` directly, with no shell string to quote.
+  const entry = {
+    type: 'command',
+    command: 'node',
+    args: [hookJsPath, 'claude', '--spool', spoolDir],
+  };
   const hooks = isObject(settings.hooks) ? settings.hooks : {};
   for (const event of HOOK_EVENTS) {
     const list = Array.isArray(hooks[event]) ? (hooks[event] as unknown[]) : [];
-    if (!list.some((group) => groupHasCommand(group, command))) {
-      list.push({ matcher: '', hooks: [{ type: 'command', command }] });
+    if (!list.some((group) => groupHasCommand(group, hookJsPath))) {
+      list.push({ matcher: '', hooks: [entry] });
     }
     hooks[event] = list;
   }
   settings.hooks = hooks;
 }
 
-export function removeClaudeHooks(settings: Json, command: string): void {
+export function removeClaudeHooks(settings: Json, hookJsPath: string): void {
   if (!isObject(settings.hooks)) return;
   const hooks = settings.hooks;
   for (const event of HOOK_EVENTS) {
     if (!Array.isArray(hooks[event])) continue;
-    const list = (hooks[event] as unknown[]).filter((group) => !groupHasCommand(group, command));
+    const list = (hooks[event] as unknown[]).filter((group) => !groupHasCommand(group, hookJsPath));
     if (list.length > 0) hooks[event] = list;
     else delete hooks[event];
   }
   if (Object.keys(hooks).length === 0) delete settings.hooks;
 }
 
-export function hasClaudeHooks(settings: Json, command: string): boolean {
+export function hasClaudeHooks(settings: Json, hookJsPath: string): boolean {
   if (!isObject(settings.hooks)) return false;
   return HOOK_EVENTS.every((event) => {
     const list = hooks_event(settings, event);
-    return list.some((group) => groupHasCommand(group, command));
+    return list.some((group) => groupHasCommand(group, hookJsPath));
   });
 }
 
@@ -109,8 +120,8 @@ export class HooksInstaller {
         : path.join(home, '.pi', 'agent');
   }
 
-  get hookCommand(): string {
-    return `node ${JSON.stringify(this.hookJsPath)} claude`;
+  get spoolDir(): string {
+    return path.join(this.storageDir, 'spool');
   }
 
   get hookJsPath(): string {
@@ -166,7 +177,7 @@ export class HooksInstaller {
         if (!existsSync(backupPath)) await writeFileAtomic(backupPath, original);
       }
       const settings = original ? (JSON.parse(original) as Json) : {};
-      addClaudeHooks(settings, this.hookJsPath);
+      addClaudeHooks(settings, this.hookJsPath, this.spoolDir);
       await writeJsonAtomic(settingsPath, settings);
     });
   }

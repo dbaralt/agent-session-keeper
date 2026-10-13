@@ -16,8 +16,10 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 function spoolDir() {
-  const base = process.env.AGENT_SESSIONS_STORAGE_DIR || path.join(os.homedir(), '.agent-sessions');
-  return path.join(base, 'spool');
+  const idx = process.argv.indexOf('--spool');
+  if (idx !== -1 && process.argv[idx + 1]) return process.argv[idx + 1];
+  // Fallback: the spool lives next to this script (<storage>/spool).
+  return path.join(__dirname, '..', 'spool');
 }
 
 function todayFile() {
@@ -45,8 +47,8 @@ function ancestorPids() {
 }
 
 function append(event) {
-  fs.mkdirSync(spoolDir(), { recursive: true });
-  fs.appendFileSync(todayFile(), `${JSON.stringify(event)}\n`);
+  fs.mkdirSync(spoolDir(), { recursive: true, mode: 0o700 });
+  fs.appendFileSync(todayFile(), `${JSON.stringify(event)}\n`, { mode: 0o600 });
 }
 
 function readStdin() {

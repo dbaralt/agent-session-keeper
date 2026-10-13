@@ -11,12 +11,16 @@ afterEach(async () => {
   for (const dir of tempDirs.splice(0)) await rm(dir, { recursive: true, force: true });
 });
 
-function runHook(input: string, env: NodeJS.ProcessEnv) {
-  return execFileSync(process.execPath, [script, 'claude'], {
-    input,
-    env: { ...process.env, ...env },
-    encoding: 'utf8',
-  });
+function runHook(input: string, storageDir: string, extraEnv: NodeJS.ProcessEnv = {}) {
+  return execFileSync(
+    process.execPath,
+    [script, 'claude', '--spool', path.join(storageDir, 'spool')],
+    {
+      input,
+      env: { ...process.env, ...extraEnv },
+      encoding: 'utf8',
+    },
+  );
 }
 
 async function spoolLines(storageDir: string): Promise<unknown[]> {
@@ -42,7 +46,8 @@ describe('resources/hook.js', () => {
         transcript_path: '/tmp/abc-123.jsonl',
         cwd: '/p/api',
       }),
-      { AGENT_SESSIONS_STORAGE_DIR: storageDir, AGENT_SESSIONS_TERMINAL_ID: 'claude/abc-123' },
+      storageDir,
+      { AGENT_SESSIONS_TERMINAL_ID: 'claude/abc-123' },
     );
 
     expect(stdout).toBe('');
@@ -63,7 +68,7 @@ describe('resources/hook.js', () => {
   it('exits 0 and writes nothing for malformed input', async () => {
     const storageDir = await mkdtemp(path.join(os.tmpdir(), 'ask-hook-bad-'));
     tempDirs.push(storageDir);
-    const stdout = runHook('this is not json', { AGENT_SESSIONS_STORAGE_DIR: storageDir });
+    const stdout = runHook('this is not json', storageDir);
     expect(stdout).toBe('');
     const lines = await spoolLines(storageDir);
     expect(lines).toHaveLength(1);
