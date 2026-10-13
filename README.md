@@ -13,6 +13,46 @@ extension keeps that link and replays the agent's own resume command.
 - Screen mockups: `docs/design/`
 - Build order and status: `PROGRESS.md`
 
+## Requirements
+
+- VS Code 1.93 or newer.
+- At least one of `claude` (Claude Code) or `pi` installed and signed in.
+- Shell integration enabled for the most exact capture (VS Code default in zsh, bash, fish, PowerShell).
+
+## Install
+
+The production package is committed at the repo root (`agent-session-keeper-<version>.vsix`)
+and attached to every GitHub release. Clone the repo (or download the `.vsix` from the
+release), then:
+
+1. Make sure the `code` command is on your PATH. In VS Code:
+   **Command Palette (Cmd+Shift+P) → Shell Command: Install 'code' command in PATH**.
+
+2. Install the package:
+
+   ```bash
+   code --install-extension agent-session-keeper-0.0.4.vsix
+   ```
+
+3. Reload VS Code — **Command Palette → Developer: Reload Window** — or fully quit
+   and reopen it.
+
+4. The **Agent Sessions** icon (clock with an arrow) appears in the activity bar.
+   Open a terminal, run `claude` or `pi`, and send a prompt. The session should show
+   under **Running** within a few seconds.
+
+To update later, run the same command with the new file and `--force`:
+
+```bash
+code --install-extension agent-session-keeper-<version>.vsix --force
+```
+
+### Optional: exact capture before the first prompt
+
+Run **Agent Sessions: Install Agent Hooks** from the Command Palette. This edits your
+own `~/.claude/settings.json` and `~/.pi/agent/extensions/`, so back those up first —
+see `docs/TESTING.md` §5.
+
 ## Storage
 
 Session records live in one global history folder shared by every project and
