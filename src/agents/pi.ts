@@ -106,8 +106,12 @@ export function createPiAdapter(options: PiAdapterOptions = {}): AgentAdapter {
       const isResume = resume.present || hasAnyFlag(args, ['--continue', '-c']);
       const match: CommandMatch = { interactive: !isNonInteractive(args), isResume };
 
-      const id = sessionId ?? resume.value;
-      if (id) match.explicitSessionId = id;
+      if (sessionId && isSafeSessionId(sessionId)) {
+        match.explicitSessionId = sessionId;
+      } else if (resume.value && isSafeSessionId(resume.value)) {
+        match.explicitSessionId = resume.value;
+      }
+      // A resume by name or path is left as a pending resume (no id).
       const name = findFlagValue(args, ['--name', '-n']).value;
       if (name) match.name = name;
       return match;

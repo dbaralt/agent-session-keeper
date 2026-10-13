@@ -107,6 +107,24 @@ describe('pi session file reader', () => {
     expect(found).toBe(file);
   });
 
+  it('matches a custom alias pattern', () => {
+    const custom = createPiAdapter({ env: {}, patterns: ['pp'] });
+    expect(normalize(custom.matchCommand(tokenize('pp --session abc')))).toEqual({
+      interactive: true,
+      isResume: true,
+      explicitSessionId: 'abc',
+    });
+  });
+
+  it('treats a session by path as a pending resume, not an id', () => {
+    expect(match('pi --session /path/to/session.jsonl')).toEqual({
+      interactive: true,
+      isResume: true,
+      explicitSessionId: undefined,
+      name: undefined,
+    });
+  });
+
   it('builds commands', () => {
     expect(adapter.buildNewCommand({ sessionId: 'abc', name: 'My Session' })).toBe(
       "pi --session-id abc --name 'My Session'",

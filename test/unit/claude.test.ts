@@ -75,6 +75,21 @@ describe('claude command matching', () => {
       explicitSessionId: 'abc',
     });
   });
+
+  it('treats a resume by name or path as a pending resume, not an id', () => {
+    expect(match('claude --resume "auth refactor"')).toEqual({
+      interactive: true,
+      isResume: true,
+      explicitSessionId: undefined,
+      name: undefined,
+    });
+    expect(match('claude --resume /path/to/session.jsonl')).toEqual({
+      interactive: true,
+      isResume: true,
+      explicitSessionId: undefined,
+      name: undefined,
+    });
+  });
 });
 
 describe('claude project folder encoding', () => {

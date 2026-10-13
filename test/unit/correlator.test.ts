@@ -383,4 +383,15 @@ describe('Correlator', () => {
     await correlator.onTerminalClosed('t1');
     expect(store.get('claude', 's1')?.status).toBe('closed');
   });
+
+  it('binds a resume-by-name launch to the real session id', async () => {
+    const { store, correlator } = await setup();
+    await correlator.onLaunch(launch({ isResume: true }));
+    clock += 500;
+    await correlator.onSessionFile(
+      fileEvent({ info: { sessionId: 'real-id', cwd: '/p/api' } }),
+    );
+    expect(store.get('claude', 'real-id')).toBeDefined();
+    expect(store.all()).toHaveLength(1);
+  });
 });
