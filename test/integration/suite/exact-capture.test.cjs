@@ -105,26 +105,45 @@ suite('Agent Session Keeper exact capture', () => {
     assert.strictEqual(record.status, 'closed');
   });
 
-  test('spool hook events are captured exactly', async () => {
+  test('a hook event with no owning terminal does not change ownership', async () => {
+    const sessionId = 'hook-event-1';
+    const record = {
+      schemaVersion: 1,
+      agent: 'claude',
+      sessionId,
+      title: 'Hooked',
+      titleSource: 'user',
+      cwd: '/p/hooked',
+      createdAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString(),
+      status: 'running',
+      bindingConfidence: 'exact',
+      launch: { commandLine: 'claude', via: 'hook', windowSessionId: 'other-window' },
+      machine: 'test',
+      updatedAt: new Date().toISOString(),
+    };
+    const recordFile = path.join(STORAGE, 'sessions', 'claude', `${sessionId}.json`);
+    fs.mkdirSync(path.dirname(recordFile), { recursive: true });
+    fs.writeFileSync(recordFile, `${JSON.stringify(record, null, 2)}\n`);
+
     const spoolDir = path.join(STORAGE, 'spool');
     fs.mkdirSync(spoolDir, { recursive: true });
-    const sessionId = 'hook-event-1';
     const date = new Date().toISOString().slice(0, 10);
     fs.appendFileSync(
       path.join(spoolDir, `events-${date}.jsonl`),
       `${JSON.stringify({
         agent: 'claude',
-        event: 'SessionStart',
+        event: 'UserPromptSubmit',
         session_id: sessionId,
         cwd: '/p/hooked',
-        transcript_path: '/tmp/hooked.jsonl',
         ts: new Date().toISOString(),
       })}\n`,
     );
 
-    const record = await waitFor(() => readRecord('claude', sessionId));
-    assert.strictEqual(record.bindingConfidence, 'exact');
-    assert.strictEqual(record.launch.via, 'hook');
-    assert.strictEqual(record.cwd, '/p/hooked');
+    // The spool reader feeds the correlator; without an owning terminal the
+    // hook may refresh activity but must not claim the session.
+    await delay(1500);
+    const after = readRecord('claude', sessionId);
+    assert.strictEqual(after.launch.windowSessionId, 'other-window');
   });
 });

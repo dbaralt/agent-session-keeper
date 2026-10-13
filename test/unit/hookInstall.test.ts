@@ -99,6 +99,15 @@ describe('R2-1: Claude hooks are installed in exec form with an explicit spool d
       machine: 'test',
       windowSessionId: 'window-1',
     });
+    // This window owns a pending launch in that cwd, so the hook binds here.
+    await correlator.onLaunch({
+      terminalKey: 't1',
+      agent: 'claude',
+      cwd: '/p/api',
+      commandLine: 'claude',
+      startedAt: new Date().toISOString(),
+      isResume: false,
+    });
     await correlator.onHookEvent(event!);
     expect(store.get('claude', 'abc-123')).toMatchObject({ agent: 'claude', sessionId: 'abc-123' });
     await store.dispose();

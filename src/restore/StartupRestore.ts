@@ -37,14 +37,16 @@ export class StartupRestore {
     const records = this.store.all();
     const liveTerminals = await this.liveTerminals();
     const freshWindows = await readFreshWindows(this.storageDir);
-    const { interrupted, stillRunning } = detectInterrupted(
+    const { interrupted, stillRunning, rebound } = detectInterrupted(
       records,
       vscode.env.sessionId,
       liveTerminals,
       freshWindows,
     );
 
-    for (const record of stillRunning) {
+    // Only sessions whose live terminal this window actually matched become ours
+    // again. Sessions kept alive by another window's heartbeat stay owned there.
+    for (const record of rebound) {
       await this.store.update(record.agent, record.sessionId, {
         launch: { ...record.launch, windowSessionId: vscode.env.sessionId },
       });
@@ -54,7 +56,7 @@ export class StartupRestore {
     }
     this.statusBar.update(interrupted.length);
     this.logger?.info(
-      `startup: ${stillRunning.length} running, ${interrupted.length} interrupted${
+      `startup: ${stillRunning.length} running, ${rebound.length} rebound, ${interrupted.length} interrupted${
         liveTerminals.length ? `, ${liveTerminals.length} live terminal(s)` : ''
       }`,
     );
@@ -64,7 +66,7 @@ export class StartupRestore {
     if (relevant.length === 0) return;
 
     if (this.setting === 'always') {
-      await this.restorer.resumeMany(relevant);
+      await this.restoreWithClaim(relevant);
       return;
     }
 
@@ -76,7 +78,7 @@ export class StartupRestore {
       'Dismiss',
     );
     if (choice === 'Restore all') {
-      await this.restorer.resumeMany(relevant);
+      await this.restoreWithClaim(relevant);
     } else if (choice === 'Choose\u2026') {
       await this.chooseAndResume(relevant);
     }
@@ -93,7 +95,21 @@ export class StartupRestore {
       canPickMany: true,
       title: 'Sessions to restore',
     });
-    if (picked) await this.restorer.resumeMany(picked.map((item) => item.record));
+    if (picked) await this.restoreWithClaim(picked.map((item) => item.record));
+  }
+
+  /** Claim each restore first so two windows cannot both resume a session. */
+  private async restoreWithClaim(records: readonly SessionRecord[]): Promise<void> {
+    for (const record of records) {
+      const claimed = await this.store.claimForRestore(
+        record.agent,
+        record.sessionId,
+        vscode.env.sessionId,
+      );
+      if (!claimed) continue;
+      await this.restorer.resume(claimed);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
   }
 
   private relevantToWorkspace(records: readonly SessionRecord[]): SessionRecord[] {

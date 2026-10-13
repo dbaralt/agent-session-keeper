@@ -171,8 +171,35 @@ export class SessionStore {
     return next;
   }
 
-  async delete(agent: AgentId, sessionId: string): Promise<void> {
+  /**
+   * Compare-and-set used by startup restore: only change an `interrupted`
+   * record to `running` and claim it for this window. If another window got
+   * there first, returns undefined.
+   */
+  async claimForRestore(
+    agent: AgentId,
+    sessionId: string,
+    windowSessionId: string,
+  ): Promise<SessionRecord | undefined> {
     const key = sessionKey(agent, sessionId);
+    const filePath = this.filePathFor(agent, sessionId);
+    const now = new Date().toISOString();
+    const claimed = await this.mutate(filePath, key, (existing) => {
+      if (!existing || existing.status !== 'interrupted') return undefined;
+      return normalizeRecord({
+        ...existing,
+        status: 'running',
+        lastResumedAt: now,
+        launch: { ...existing.launch, windowSessionId },
+        updatedAt: now,
+      });
+    });
+    if (!claimed) return undefined;
+    this.commit(claimed);
+    return claimed;
+  }
+
+  async delete(agent: AgentId, sessionId: string): Promise<void> {    const key = sessionKey(agent, sessionId);
     const filePath = this.filePathFor(agent, sessionId);
     await withFileLock(`${filePath}.lock`, async () => {
       await rm(filePath, { force: true });

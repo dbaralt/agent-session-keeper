@@ -149,6 +149,19 @@ describe('SessionStore', () => {
     expect(dirStat.mode & 0o777).toBe(0o700);
   });
 
+  it('claims an interrupted session for restore exactly once', async () => {
+    const store = await makeStore();
+    await store.init();
+    await store.upsert(makeRecord({ sessionId: 'abc', status: 'interrupted' }));
+
+    const claimed = await store.claimForRestore('claude', 'abc', 'window-x');
+    expect(claimed?.status).toBe('running');
+    expect(claimed?.launch.windowSessionId).toBe('window-x');
+
+    const second = await store.claimForRestore('claude', 'abc', 'window-y');
+    expect(second).toBeUndefined();
+  });
+
   it('notifies a second window when a record changes', async () => {
     const windowA = await makeStore();
     const windowB = new SessionStore({ rootDir: windowA.rootDir });

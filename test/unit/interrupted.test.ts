@@ -27,7 +27,7 @@ describe('detectInterrupted', () => {
     const live: LiveTerminal[] = [{ key: 't1', shellPid: 42, name: 'zsh' }];
     const result = detectInterrupted([record], CURRENT, live);
     expect(result.interrupted).toEqual([]);
-    expect(result.stillRunning.map((r) => r.sessionId)).toEqual(['s1']);
+    expect(result.rebound.map((r) => r.sessionId)).toEqual(['s1']);
   });
 
   it('leaves a session owned by the current window alone', () => {
@@ -74,7 +74,7 @@ describe('detectInterrupted', () => {
     });
     const result = detectInterrupted([record], CURRENT, [], new Set(['window-b']));
     expect(result.interrupted).toEqual([]);
-    expect(result.stillRunning.map((r) => r.sessionId)).toEqual(['s1']);
+    expect(result.aliveElsewhere.map((r) => r.sessionId)).toEqual(['s1']);
   });
 
   it('interrupts a session whose window heartbeat is gone', () => {

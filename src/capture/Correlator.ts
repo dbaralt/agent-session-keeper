@@ -116,6 +116,22 @@ export class Correlator {
     const pending = this.takePendingForHook(event.agent, adapter, info, filePath);
     const terminalKey = pending?.terminalKey ?? this.terminalKeyForHook(event);
 
+    // Only act on events that match one of this window's own terminals. A hook
+    // from another window (or an unknown source) must not claim the session;
+    // it may only refresh activity.
+    if (!terminalKey) {
+      const existing = this.store.get(event.agent, sessionId);
+      if (existing) {
+        const nowIso = new Date(this.now()).toISOString();
+        await this.store.update(event.agent, sessionId, {
+          lastActiveAt: event.ts ?? nowIso,
+          updatedAt: nowIso,
+        });
+        return this.store.get(event.agent, sessionId) ?? existing;
+      }
+      return undefined;
+    }
+
     let parentSessionId: string | undefined;
     if (terminalKey && (event.source === 'clear' || event.source === 'fork')) {
       const parsed = parseSessionKey(this.terminalSessions.get(terminalKey) ?? '');

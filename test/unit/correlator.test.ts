@@ -300,8 +300,7 @@ describe('Correlator', () => {
     expect(store.get('claude', 's1')?.status).toBe('archived');
   });
 
-  it('keeps the original title and command line on resume and Stop hooks', async () => {
-    const { store, correlator } = await setup();
+  it('keeps the original title and command line on resume and Stop hooks', async () => {    const { store, correlator } = await setup();
     await correlator.onLaunch(launch({ commandLine: 'claude' }));
     clock += 500;
     await correlator.onSessionFile(
@@ -329,5 +328,43 @@ describe('Correlator', () => {
     });
     expect(store.get('claude', 's1')?.title).toBe('add health check');
     expect(store.get('claude', 's1')?.launch.commandLine).toBe('claude');
+  });
+
+  it('does not change ownership on another window\'s hook event', async () => {
+    const rootDir = await mkdtemp(path.join(os.tmpdir(), 'ask-owner-'));
+    const store = new SessionStore({ rootDir });
+    await store.init();
+    const registry = new AgentRegistry().register(createStubAdapter('claude'));
+    const windowA = new Correlator({
+      store,
+      registry,
+      machine: 'm',
+      windowSessionId: 'window-a',
+      now: () => clock,
+    });
+    const windowB = new Correlator({
+      store,
+      registry,
+      machine: 'm',
+      windowSessionId: 'window-b',
+      now: () => clock,
+    });
+
+    await windowA.onLaunch(launch({ explicitSessionId: 's1' }));
+    expect(store.get('claude', 's1')?.launch.windowSessionId).toBe('window-a');
+
+    clock += 1000;
+    await windowB.onHookEvent({
+      agent: 'claude',
+      event: 'UserPromptSubmit',
+      session_id: 's1',
+      cwd: '/p/api',
+      terminalId: 'claude/s1',
+      ts: iso(),
+    });
+    expect(store.get('claude', 's1')?.launch.windowSessionId).toBe('window-a');
+
+    await store.dispose();
+    await rm(rootDir, { recursive: true, force: true });
   });
 });

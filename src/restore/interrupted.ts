@@ -10,8 +10,12 @@ export interface LiveTerminal {
 export interface InterruptedDetection {
   /** Was running when VS Code went away and has no live terminal. */
   interrupted: SessionRecord[];
-  /** Was running and still has a matching live terminal (e.g. after a reload). */
+  /** Already owned by this window. */
   stillRunning: SessionRecord[];
+  /** Owned by another window but a live terminal in this window matched it. */
+  rebound: SessionRecord[];
+  /** Owned by another window whose heartbeat is still fresh. */
+  aliveElsewhere: SessionRecord[];
 }
 
 function findLiveTerminal(
@@ -31,7 +35,7 @@ function findLiveTerminal(
 /**
  * Decide which records were interrupted. A window reload keeps terminals alive,
  * so a record whose shell pid is still present is rebound rather than offered
- * for restore.
+ * for restore. A record whose owning window still heartbeats is left alone.
  */
 export function detectInterrupted(
   records: readonly SessionRecord[],
@@ -41,6 +45,8 @@ export function detectInterrupted(
 ): InterruptedDetection {
   const interrupted: SessionRecord[] = [];
   const stillRunning: SessionRecord[] = [];
+  const rebound: SessionRecord[] = [];
+  const aliveElsewhere: SessionRecord[] = [];
 
   for (const record of records) {
     if (record.status !== 'running' && record.status !== 'pending') continue;
@@ -48,20 +54,20 @@ export function detectInterrupted(
       stillRunning.push(record);
       continue;
     }
+    if (findLiveTerminal(record, liveTerminals)) {
+      rebound.push(record);
+      continue;
+    }
     // A fresh heartbeat means that window is still alive, even if this window
     // cannot see its terminals.
     if (record.launch.windowSessionId && freshWindowIds.has(record.launch.windowSessionId)) {
-      stillRunning.push(record);
+      aliveElsewhere.push(record);
       continue;
     }
-    if (findLiveTerminal(record, liveTerminals)) {
-      stillRunning.push(record);
-    } else {
-      interrupted.push(record);
-    }
+    interrupted.push(record);
   }
 
-  return { interrupted, stillRunning };
+  return { interrupted, stillRunning, rebound, aliveElsewhere };
 }
 
 export { findLiveTerminal };
