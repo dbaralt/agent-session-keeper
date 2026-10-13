@@ -2,7 +2,7 @@
   "name": "agent-session-keeper",
   "displayName": "Agent Session Keeper",
   "description": "Record Claude Code and pi terminal sessions and reopen them after a VS Code restart.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "danielbaralt",
   "license": "MIT",
   "preview": true,
@@ -75,7 +75,7 @@
       },
       {
         "command": "agentSessions.restoreInterrupted",
-        "title": "Agent Sessions: Restore Interrupted Sessions\u2026"
+        "title": "Agent Sessions: Restore Interrupted Sessions…"
       },
       {
         "command": "agentSessions.newClaude",
