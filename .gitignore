@@ -5,4 +5,5 @@ out/
 .sandbox/
 test/.tmp/
 *.vsix
+!agent-session-keeper-0.0.4.vsix
 .DS_Store
