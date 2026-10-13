@@ -4,6 +4,7 @@ const path = require('node:path');
 const vscode = require('vscode');
 
 const STORAGE = process.env.AGENT_SESSIONS_STORAGE_DIR;
+const CLAUDE_ROOT = process.env.CLAUDE_CONFIG_DIR;
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -96,7 +97,7 @@ suite('Agent Session Keeper UI', () => {
   });
 
   test('opens the transcript file', async () => {
-    const transcript = path.join(STORAGE, 'transcripts', 'ui-transcript.jsonl');
+    const transcript = path.join(CLAUDE_ROOT, 'projects', '-p-api', 'ui-transcript.jsonl');
     fs.mkdirSync(path.dirname(transcript), { recursive: true });
     fs.writeFileSync(transcript, '{}\n');
     const record = makeRecord({

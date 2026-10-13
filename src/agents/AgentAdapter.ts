@@ -40,10 +40,8 @@ export interface AgentAdapter {
   buildResumeCommand(record: SessionRecord, template?: string): string;
 }
 
-/** Replace the `${sessionId}`, `${cwd}` and `${title}` placeholders, shell-quoted. */
+/** Replace the `${sessionId}` placeholder, shell-quoted. `${cwd}` and `${title}`
+ * are intentionally not substituted — titles can come from prompts. */
 export function applyResumeTemplate(template: string, record: SessionRecord): string {
-  return template
-    .replaceAll('${sessionId}', shellQuote(record.sessionId))
-    .replaceAll('${cwd}', shellQuote(record.cwd))
-    .replaceAll('${title}', shellQuote(record.title));
+  return template.replaceAll('${sessionId}', shellQuote(record.sessionId));
 }

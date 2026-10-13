@@ -245,6 +245,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push({ dispose: store.onDidChange(refreshUi) });
 
+  // Apply the live title setting immediately; structural settings (storage, roots,
+  // resume command) still need a reload, which we surface in the log.
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (!event.affectsConfiguration('agentSessions')) return;
+      correlator.setTitleFromFirstPrompt(settings().get<boolean>('titleFromFirstPrompt') ?? true);
+      log().info('agentSessions settings changed; structural changes need a window reload');
+    }),
+  );
+
   const heartbeat = new WindowHeartbeat({
     storageDir,
     windowSessionId: vscode.env.sessionId,
@@ -264,20 +274,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   });
   startup.run().catch((error) => log().error(`startup restore failed: ${String(error)}`));
 
-  const resolveRecord = (arg: unknown): SessionRecord | undefined => {
+  const resolveRecord = async (arg: unknown): Promise<SessionRecord | undefined> => {
     if (!arg || typeof arg !== 'object') return undefined;
-    const candidate = arg as { record?: SessionRecord; agent?: string; sessionId?: string } &
-      Partial<SessionRecord>;
-    if (candidate.record) return candidate.record;
+    const candidate = arg as { agent?: string; sessionId?: string };
     if (candidate.agent && candidate.sessionId) {
-      return store.get(candidate.agent, candidate.sessionId) ?? (candidate as SessionRecord);
+      return store.getOrRead(candidate.agent, candidate.sessionId);
     }
     return undefined;
   };
 
   context.subscriptions.push(
     vscode.commands.registerCommand('agentSessions.resume', async (arg?: unknown) => {
-      const record = resolveRecord(arg);
+      const record = await resolveRecord(arg);
       if (!record) {
         void vscode.window.showWarningMessage('Agent Sessions: no session selected.');
         return;

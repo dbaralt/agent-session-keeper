@@ -3,7 +3,8 @@ import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { SessionFileInfo, SessionRecord } from '../model/types';
 import { isSafeSessionId } from '../model/types';
-import { expandHome, homeDir, pathsEqual } from '../util/paths';
+import { isPlainTextTitle } from '../model/titles';
+import { expandHome, homeDir, isUnder, pathsEqual } from '../util/paths';
 import { shellQuote } from '../util/shellQuote';
 import {
   applyResumeTemplate,
@@ -179,9 +180,15 @@ export function createPiAdapter(options: PiAdapterOptions = {}): AgentAdapter {
 
     async transcriptPathFor(record: SessionRecord): Promise<string | undefined> {
       if (!isSafeSessionId(record.sessionId)) return undefined;
-      if (record.transcriptPath && existsSync(record.transcriptPath)) return record.transcriptPath;
-
       const root = sessionsDir(options);
+      if (
+        record.transcriptPath &&
+        isUnder(record.transcriptPath, root) &&
+        existsSync(record.transcriptPath)
+      ) {
+        return record.transcriptPath;
+      }
+
       for (const entry of await safeReaddir(root)) {
         const dir = path.join(root, entry);
         for (const file of await safeReaddir(dir)) {
@@ -196,7 +203,7 @@ export function createPiAdapter(options: PiAdapterOptions = {}): AgentAdapter {
     buildNewCommand({ sessionId, name }: NewSessionOptions): string {
       let command = 'pi';
       if (sessionId) command += ` --session-id ${shellQuote(sessionId)}`;
-      if (name) command += ` --name ${shellQuote(name)}`;
+      if (name && isPlainTextTitle(name)) command += ` --name ${shellQuote(name)}`;
       return command;
     },
 

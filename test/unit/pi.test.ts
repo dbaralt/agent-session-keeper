@@ -107,6 +107,16 @@ describe('pi session file reader', () => {
     expect(found).toBe(file);
   });
 
+  it('does not trust a transcript path outside the session root', async () => {
+    const found = await adapter.transcriptPathFor({
+      agent: 'pi',
+      sessionId: 'nope',
+      cwd: '/Users/me/code/api',
+      transcriptPath: '/etc/hosts',
+    } as never);
+    expect(found).toBeUndefined();
+  });
+
   it('matches a custom alias pattern', () => {
     const custom = createPiAdapter({ env: {}, patterns: ['pp'] });
     expect(normalize(custom.matchCommand(tokenize('pp --session abc')))).toEqual({

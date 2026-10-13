@@ -78,9 +78,9 @@ export class StartupRestore {
       return;
     }
 
-    const plural = interrupted.length === 1 ? 'session was' : 'sessions were';
+    const plural = relevant.length === 1 ? 'session was' : 'sessions were';
     const choice = await vscode.window.showInformationMessage(
-      `${interrupted.length} agent ${plural} interrupted when VS Code closed.`,
+      `${relevant.length} agent ${plural} interrupted when VS Code closed.`,
       'Restore all',
       'Choose\u2026',
       'Dismiss',

@@ -26,13 +26,14 @@ export type SessionAction =
   | 'showTerminal'
   | 'deleteRecord';
 
-function recordFromArg(arg: unknown, store: SessionStore): SessionRecord | undefined {
+async function recordFromArg(
+  arg: unknown,
+  store: SessionStore,
+): Promise<SessionRecord | undefined> {
   if (!arg || typeof arg !== 'object') return undefined;
-  const candidate = arg as { record?: SessionRecord; agent?: string; sessionId?: string } &
-    Partial<SessionRecord>;
-  if (candidate.record) return candidate.record;
+  const candidate = arg as { agent?: string; sessionId?: string };
   if (candidate.agent && candidate.sessionId) {
-    return store.get(candidate.agent, candidate.sessionId) ?? (candidate as SessionRecord);
+    return store.getOrRead(candidate.agent, candidate.sessionId);
   }
   return undefined;
 }
@@ -117,7 +118,7 @@ export class SessionCommands {
   }
 
   private async rename(arg?: unknown): Promise<void> {
-    const record = recordFromArg(arg, this.store);
+    const record = await recordFromArg(arg, this.store);
     if (!record) return;
     await this.renameRecord(record);
     this.refresh();
@@ -137,21 +138,21 @@ export class SessionCommands {
   }
 
   private async togglePin(arg?: unknown): Promise<void> {
-    const record = recordFromArg(arg, this.store);
+    const record = await recordFromArg(arg, this.store);
     if (!record) return;
     await this.store.update(record.agent, record.sessionId, { pinned: !record.pinned });
     this.refresh();
   }
 
   private async archive(arg?: unknown): Promise<void> {
-    const record = recordFromArg(arg, this.store);
+    const record = await recordFromArg(arg, this.store);
     if (!record) return;
     await this.store.update(record.agent, record.sessionId, { status: 'archived' });
     this.refresh();
   }
 
   private async copyResumeCommand(arg?: unknown): Promise<void> {
-    const record = recordFromArg(arg, this.store);
+    const record = await recordFromArg(arg, this.store);
     if (!record) return;
     await this.copy(record);
   }
@@ -171,7 +172,7 @@ export class SessionCommands {
   }
 
   private async copySessionId(arg?: unknown): Promise<void> {
-    const record = recordFromArg(arg, this.store);
+    const record = await recordFromArg(arg, this.store);
     if (!record) return;
     await this.copyId(record);
   }
@@ -184,7 +185,7 @@ export class SessionCommands {
   }
 
   private async openTranscript(arg?: unknown): Promise<void> {
-    const record = recordFromArg(arg, this.store);
+    const record = await recordFromArg(arg, this.store);
     if (!record) return;
     await this.openTranscriptRecord(record);
   }
@@ -203,7 +204,7 @@ export class SessionCommands {
   }
 
   private async showTerminal(arg?: unknown): Promise<void> {
-    const record = recordFromArg(arg, this.store);
+    const record = await recordFromArg(arg, this.store);
     if (!record) return;
     this.showTerminalRecord(record);
   }
@@ -222,7 +223,7 @@ export class SessionCommands {
   }
 
   private async deleteRecord(arg?: unknown): Promise<void> {
-    const record = recordFromArg(arg, this.store);
+    const record = await recordFromArg(arg, this.store);
     if (!record) return;
     const choice = await vscode.window.showWarningMessage(
       `Delete the record for "${record.title}"? The agent's own transcript is not touched.`,

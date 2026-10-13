@@ -90,6 +90,19 @@ export class SessionStore {
     return this.records.get(sessionKey(agent, sessionId));
   }
 
+  /** Look a record up in memory, then on disk (never trusts a caller object). */
+  async getOrRead(agent: AgentId, sessionId: string): Promise<SessionRecord | undefined> {
+    const key = sessionKey(agent, sessionId);
+    const fromMemory = this.records.get(key);
+    if (fromMemory) return fromMemory;
+    const fromDisk = await this.readRecord(this.filePathFor(agent, sessionId));
+    if (fromDisk) {
+      this.records.set(key, fromDisk);
+      return fromDisk;
+    }
+    return undefined;
+  }
+
   filePathFor(agent: AgentId, sessionId: string): string {
     return path.join(this.sessionsDir, agent, `${sessionFileName(sessionId)}.json`);
   }

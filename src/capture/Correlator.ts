@@ -64,7 +64,7 @@ export class Correlator {
   private readonly registry: AgentRegistry;
   private readonly machine: string;
   private readonly windowSessionId: string;
-  private readonly titleFromFirstPrompt: boolean;
+  private titleFromFirstPrompt: boolean;
   private readonly now: () => number;
   private readonly logger: StoreLogger | undefined;
   private readonly workspaceFolderFor: ((cwd: string) => WorkspaceInfo | undefined) | undefined;
@@ -166,6 +166,11 @@ export class Correlator {
     if (filePath) params.filePath = filePath;
     if (parentSessionId) params.parentSessionId = parentSessionId;
     return this.bind(params);
+  }
+
+  /** Update the live setting without reactivating. */
+  setTitleFromFirstPrompt(value: boolean): void {
+    this.titleFromFirstPrompt = value;
   }
 
   /** A command line was recognized as starting an agent. */

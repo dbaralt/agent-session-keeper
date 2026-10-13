@@ -11,6 +11,11 @@ export function fallbackTitle(displayName: string, cwd: string, now: Date = new 
   return `${displayName} · ${folder} · ${time}`;
 }
 
+/** Titles safe to pass to an agent as `--name`: plain letters, digits and a few marks. */
+export function isPlainTextTitle(value: string): boolean {
+  return value.length <= 80 && /^[A-Za-z0-9 .\-_,:!?()]+$/.test(value);
+}
+
 /**
  * Make a title unique among the listed sessions by appending ` (2)`, ` (3)`, …
  * Archived records do not count because they are not listed.

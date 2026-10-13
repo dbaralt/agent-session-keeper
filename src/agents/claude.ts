@@ -3,6 +3,7 @@ import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { SessionFileInfo, SessionRecord } from '../model/types';
 import { isSafeSessionId } from '../model/types';
+import { isPlainTextTitle } from '../model/titles';
 import { expandHome, homeDir, isUnder, pathsEqual } from '../util/paths';
 import { shellQuote } from '../util/shellQuote';
 import {
@@ -177,9 +178,15 @@ export function createClaudeAdapter(options: ClaudeAdapterOptions = {}): AgentAd
 
     async transcriptPathFor(record: SessionRecord): Promise<string | undefined> {
       if (!isSafeSessionId(record.sessionId)) return undefined;
-      if (record.transcriptPath && existsSync(record.transcriptPath)) return record.transcriptPath;
-
       const projects = projectsDir(options);
+      if (
+        record.transcriptPath &&
+        isUnder(record.transcriptPath, projects) &&
+        existsSync(record.transcriptPath)
+      ) {
+        return record.transcriptPath;
+      }
+
       const direct = path.join(projects, encodeProjectDir(record.cwd), `${record.sessionId}.jsonl`);
       if (isUnder(direct, projects) && existsSync(direct)) return direct;
 
@@ -193,7 +200,7 @@ export function createClaudeAdapter(options: ClaudeAdapterOptions = {}): AgentAd
     buildNewCommand({ sessionId, name }: NewSessionOptions): string {
       let command = 'claude';
       if (sessionId) command += ` --session-id ${shellQuote(sessionId)}`;
-      if (name) command += ` --name ${shellQuote(name)}`;
+      if (name && isPlainTextTitle(name)) command += ` --name ${shellQuote(name)}`;
       return command;
     },
 

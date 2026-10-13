@@ -160,6 +160,16 @@ describe('claude session file reader', () => {
     } as never);
     expect(missing).toBeUndefined();
   });
+
+  it('does not trust a transcript path outside the session root', async () => {
+    const found = await adapter.transcriptPathFor({
+      agent: 'claude',
+      sessionId: 'nope',
+      cwd: '/Users/me/code/api',
+      transcriptPath: '/etc/hosts',
+    } as never);
+    expect(found).toBeUndefined();
+  });
 });
 
 describe('claude command builders', () => {
@@ -182,6 +192,6 @@ describe('claude command builders', () => {
         { sessionId: 'abc', cwd: '/x', title: 'T' } as never,
         'cd ${cwd} && claude --resume ${sessionId} --permission-mode plan',
       ),
-    ).toBe('cd /x && claude --resume abc --permission-mode plan');
+    ).toBe('cd ${cwd} && claude --resume abc --permission-mode plan');
   });
 });

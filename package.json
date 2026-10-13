@@ -254,13 +254,13 @@
         "agentSessions.agents.claude.resumeCommand": {
           "type": "string",
           "default": "claude --resume ${sessionId}",
-          "description": "Template used to resume a Claude Code session. Supports ${sessionId}, ${cwd} and ${title}.",
+          "description": "Template used to resume a Claude Code session. Supports ${sessionId} only.",
           "scope": "machine"
         },
         "agentSessions.agents.pi.resumeCommand": {
           "type": "string",
           "default": "pi --session ${sessionId}",
-          "description": "Template used to resume a pi session. Supports ${sessionId}, ${cwd} and ${title}.",
+          "description": "Template used to resume a pi session. Supports ${sessionId} only.",
           "scope": "machine"
         },
         "agentSessions.agents.claude.sessionRoot": {
