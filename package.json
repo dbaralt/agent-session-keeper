@@ -2,7 +2,7 @@
   "name": "agent-session-keeper",
   "displayName": "Agent Session Keeper",
   "description": "Record Claude Code and pi terminal sessions and reopen them after a VS Code restart.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "danielbaralt",
   "license": "MIT",
   "preview": true,
