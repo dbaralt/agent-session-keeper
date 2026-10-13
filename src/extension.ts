@@ -258,6 +258,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     restorer,
     statusBar,
     storageDir,
+    monitor,
     logger: log(),
     setting: settings().get<'prompt' | 'always' | 'never'>('restoreOnStartup') ?? 'prompt',
   });

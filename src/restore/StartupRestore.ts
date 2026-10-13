@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import type { SessionRecord } from '../model/types';
+import { sessionKey, type SessionRecord } from '../model/types';
+import type { TerminalMonitor } from '../capture/TerminalMonitor';
 import type { SessionStore, StoreLogger } from '../store/SessionStore';
 import { readFreshWindows } from './heartbeat';
 import { detectInterrupted, type LiveTerminal } from './interrupted';
@@ -11,6 +12,7 @@ export interface StartupRestoreOptions {
   restorer: Restorer;
   statusBar: StatusBar;
   storageDir: string;
+  monitor: TerminalMonitor;
   setting: 'prompt' | 'always' | 'never';
   logger?: StoreLogger;
 }
@@ -21,6 +23,7 @@ export class StartupRestore {
   private readonly restorer: Restorer;
   private readonly statusBar: StatusBar;
   private readonly storageDir: string;
+  private readonly monitor: TerminalMonitor;
   private readonly setting: 'prompt' | 'always' | 'never';
   private readonly logger: StoreLogger | undefined;
 
@@ -29,6 +32,7 @@ export class StartupRestore {
     this.restorer = options.restorer;
     this.statusBar = options.statusBar;
     this.storageDir = options.storageDir;
+    this.monitor = options.monitor;
     this.setting = options.setting;
     this.logger = options.logger;
   }
@@ -50,6 +54,10 @@ export class StartupRestore {
       await this.store.update(record.agent, record.sessionId, {
         launch: { ...record.launch, windowSessionId: vscode.env.sessionId },
       });
+      const terminal = await this.findTerminalForRecord(record);
+      if (terminal) {
+        await this.monitor.adopt(terminal, sessionKey(record.agent, record.sessionId));
+      }
     }
     for (const record of interrupted) {
       await this.store.update(record.agent, record.sessionId, { status: 'interrupted' });
@@ -129,5 +137,19 @@ export class StartupRestore {
         return live;
       }),
     );
+  }
+
+  private async findTerminalForRecord(
+    record: SessionRecord,
+  ): Promise<vscode.Terminal | undefined> {
+    if (record.launch.shellPid !== undefined) {
+      for (const terminal of vscode.window.terminals) {
+        if ((await terminal.processId) === record.launch.shellPid) return terminal;
+      }
+    }
+    if (record.launch.terminalName) {
+      return vscode.window.terminals.find((terminal) => terminal.name === record.launch.terminalName);
+    }
+    return undefined;
   }
 }

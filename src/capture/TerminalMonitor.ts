@@ -70,6 +70,13 @@ export class TerminalMonitor {
     return terminalKey ? this.terminalsByKey.get(terminalKey) : undefined;
   }
 
+  /** Re-link a live terminal to a session after a window reload. */
+  async adopt(terminal: vscode.Terminal, sessionKey: string): Promise<void> {
+    const terminalKey = this.keyFor(terminal);
+    const shellPid = await terminal.processId;
+    this.correlator.adopt(terminalKey, sessionKey, shellPid);
+  }
+
   private async onStart(event: vscode.TerminalShellExecutionStartEvent): Promise<void> {
     try {
       await this.handleStart(event);

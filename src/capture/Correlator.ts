@@ -98,6 +98,12 @@ export class Correlator {
     if (shellPid !== undefined) this.terminalPids.set(terminalKey, shellPid);
   }
 
+  /** Re-link a live terminal to a session after a window reload. */
+  adopt(terminalKey: string, sessionKeyValue: string, shellPid?: number): void {
+    this.terminalSessions.set(terminalKey, sessionKeyValue);
+    if (shellPid !== undefined) this.terminalPids.set(terminalKey, shellPid);
+  }
+
   /** An exact-capture hook event arrived on the spool. */
   async onHookEvent(event: HookEvent): Promise<SessionRecord | undefined> {
     const adapter = this.registry.get(event.agent);

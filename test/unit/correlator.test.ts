@@ -7,6 +7,7 @@ import { Correlator } from '../../src/capture/Correlator';
 import type { SessionFileEvent } from '../../src/capture/events';
 import type { PendingLaunch } from '../../src/model/types';
 import { SessionStore } from '../../src/store/SessionStore';
+import { makeRecord } from './helpers/records';
 import { createStubAdapter } from './helpers/stubAdapter';
 
 const START = Date.parse('2026-01-02T03:00:00.000Z');
@@ -330,8 +331,7 @@ describe('Correlator', () => {
     expect(store.get('claude', 's1')?.launch.commandLine).toBe('claude');
   });
 
-  it('does not change ownership on another window\'s hook event', async () => {
-    const rootDir = await mkdtemp(path.join(os.tmpdir(), 'ask-owner-'));
+  it('does not change ownership on another window\'s hook event', async () => {    const rootDir = await mkdtemp(path.join(os.tmpdir(), 'ask-owner-'));
     const store = new SessionStore({ rootDir });
     await store.init();
     const registry = new AgentRegistry().register(createStubAdapter('claude'));
@@ -366,5 +366,21 @@ describe('Correlator', () => {
 
     await store.dispose();
     await rm(rootDir, { recursive: true, force: true });
+  });
+
+  it('marks a session closed when an adopted terminal closes', async () => {
+    const { store, correlator } = await setup();
+    await store.upsert(
+      makeRecord({
+        sessionId: 's1',
+        status: 'running',
+        launch: { commandLine: 'claude', via: 'shell-integration', shellPid: 42 },
+      }),
+    );
+
+    // After a window reload the terminal is re-linked via adopt(), not a launch.
+    correlator.adopt('t1', 'claude/s1', 42);
+    await correlator.onTerminalClosed('t1');
+    expect(store.get('claude', 's1')?.status).toBe('closed');
   });
 });
