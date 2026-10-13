@@ -26,6 +26,7 @@ export class HookSpoolReader {
   private readonly offsets = new Map<string, number>();
   private readonly handles = new Map<string, FileHandle>();
   private timer: NodeJS.Timeout | undefined;
+  private lastPruneDay: string | undefined;
   private disposed = false;
 
   constructor(options: HookSpoolReaderOptions) {
@@ -38,6 +39,7 @@ export class HookSpoolReader {
 
   async start(): Promise<void> {
     await mkdir(this.spoolDir, { recursive: true, mode: 0o700 });
+    this.lastPruneDay = new Date().toISOString().slice(0, 10);
     await this.pruneOldFiles();
     await this.skipExisting();
     this.timer = setInterval(() => {
@@ -96,6 +98,11 @@ export class HookSpoolReader {
 
   private async poll(): Promise<void> {
     if (this.disposed) return;
+    const today = new Date().toISOString().slice(0, 10);
+    if (today !== this.lastPruneDay) {
+      this.lastPruneDay = today;
+      await this.pruneOldFiles();
+    }
     for (const file of await this.files()) {
       await this.pollFile(file);
     }

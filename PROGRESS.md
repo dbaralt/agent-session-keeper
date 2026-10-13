@@ -128,6 +128,13 @@ Security and correctness changes after the external architecture/security review
 
 Left as-is per the review's "explicitly not problems" list: mkdir-lock design, global `~/.agent-sessions`, JSON-per-record, polling spool reader (beyond item 6), no Codex support.
 
+### Review follow-ups (v0.0.2 verification)
+
+- **F1** — `ensureStoragePermissions(storageDir)` now chmods the storage root, `sessions/`, `spool/`, `windows/` and `bin/` to `0700` once per activation, so a storage dir created by 0.0.1 is upgraded without waiting for a hook install.
+- **F2** — `TerminalMonitor` deletes closed terminals from `terminalsByKey` in `onDidCloseTerminal` (no per-window reference leak).
+- Spool pruning now also runs when the date rolls over in a long-lived window (not only at startup).
+- README notes that PowerShell is the safe default on Windows for quoted titles.
+
 ## Decisions
 
 ### D1 — Runtime vs. session recordings

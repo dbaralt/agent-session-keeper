@@ -1,4 +1,5 @@
 import { homedir } from 'node:os';
+import { chmod } from 'node:fs/promises';
 import path from 'node:path';
 import { expandHome } from '../util/paths';
 
@@ -28,4 +29,25 @@ export function resolveStorageDir(options: ResolveStorageDirOptions = {}): strin
   if (fromSetting) return path.resolve(expandHome(fromSetting, home));
 
   return path.join(home, '.agent-sessions');
+}
+
+/**
+ * Make an existing storage tree owner-only. New dirs are created 0700 already;
+ * this upgrades a storage dir made by an older version (0755/0644).
+ */
+export async function ensureStoragePermissions(storageDir: string): Promise<void> {
+  const dirs = [
+    storageDir,
+    path.join(storageDir, 'sessions'),
+    path.join(storageDir, 'spool'),
+    path.join(storageDir, 'windows'),
+    path.join(storageDir, 'bin'),
+  ];
+  for (const dir of dirs) {
+    try {
+      await chmod(dir, 0o700);
+    } catch {
+      // Missing dirs are fine; they will be created with the right mode.
+    }
+  }
 }

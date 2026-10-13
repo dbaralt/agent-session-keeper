@@ -37,6 +37,12 @@ Press **F5** for a plain Extension Development Host.
 Adding another agent is one adapter file implementing `AgentAdapter` plus one
 `register(...)` line in `src/agents/registry.ts`; no model, store or UI change.
 
+## Notes
+
+- Resume/new-session commands single-quote values that contain spaces or shell
+  metacharacters. Use PowerShell (the VS Code default) on Windows; cmd.exe
+  would pass those quotes literally for titles with spaces.
+
 ## Status
 
 See `PROGRESS.md` for the milestone checklist and notes.

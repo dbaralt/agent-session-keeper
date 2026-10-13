@@ -42,9 +42,13 @@ export class TerminalMonitor {
         });
       }),
       vscode.window.onDidCloseTerminal((terminal) => {
-        this.correlator.onTerminalClosed(this.keyFor(terminal)).catch((error) => {
-          this.logger?.error(`terminal close handling failed: ${String(error)}`);
-        });
+        const key = this.terminalKeys.get(terminal);
+        if (key) {
+          this.terminalsByKey.delete(key);
+          this.correlator.onTerminalClosed(key).catch((error) => {
+            this.logger?.error(`terminal close handling failed: ${String(error)}`);
+          });
+        }
       }),
     );
   }

@@ -1,4 +1,43 @@
-# Architecture & Security Review — Agent Session Keeper 0.0.1
+# Architecture & Security Review — Agent Session Keeper
+
+> **v0.0.2 verification (below) supersedes the findings for v0.0.1.** All 14 fix-list items were applied in `bb81313`/`8a0bb9c` and verified. Two follow-ups remain, both small: **F1** (chmod existing `~/.agent-sessions` on activation, not only at hook install — the owner's dir created by 0.0.1 is still 0755/0644) and **F2** (drop closed terminals from `TerminalMonitor.terminalsByKey` to avoid a per-window leak). See the "v0.0.2 verification" section.
+
+---
+
+# Part 0 — v0.0.2 verification (commit `8a0bb9c`)
+
+Verified by the reviewer: `npm run build` ✅ · `npm test` (166 tests, +11 new) ✅ · `npm run test:integration` (16 tests) ✅ · `npm run package` ✅ (13 files, 29.78 KB VSIX) · diff `65a34e4..HEAD` reviewed line by line.
+
+### Fix-list items 1–14: all correctly implemented
+
+1. **S1+S2** ✅ `isSafeSessionId` (`src/model/types.ts`) rejects at capture (`Correlator.onHookEvent`/`onLaunch`/`onSessionFile`), resume (`Restorer`, new `'invalid'` outcome), copy (`SessionCommands.copy`) and transcript lookup (both adapters, plus `isUnder(projects)`). `shellQuote` (`src/util/shellQuote.ts`) single-quotes every template substitution and command names; the SAFE_TOKEN allowlist excludes `$`, backtick, `;`, `~`, `*`, `?`, whitespace — correct. Covered by `test/unit/shellQuote.test.ts` (injection payloads asserted round-trip as one shell word).
+2. **S3** ✅ `writeFileAtomic` defaults to 0600 / dirs 0700; store, spool, heartbeat and installer all use it; installer re-chmod's the storage dir and `hook.js`.
+3. **A3** ✅ settings.json now written via `writeJsonAtomic` under `withFileLock`; backup byte-identical restore logic preserved.
+4. **A1** ✅ `WindowHeartbeat` (`src/restore/heartbeat.ts`) writes `windows/<sessionId>.json` every 30 s, fresh window = 90 s; `detectInterrupted` checks heartbeats before marking interrupted; stale files pruned; heartbeat removed on dispose. Ordering in `activate()` is safe (this window's own records are short-circuited by session id anyway).
+5. **A4** ✅ every fire-and-forget callback (terminal start/end/close, session file, hook event, heartbeat, `startup.run()`) now catches and logs.
+6. **A2** ✅ `HookSpoolReader` reads incrementally from per-file offsets with persistent handles (never the whole file), prunes spool files older than `agentSessions.spoolRetentionDays` (default 7, `minimum: 1`), handles closed on dispose.
+7. **S4** ✅ fake agents exit non-zero without `CLAUDE_CONFIG_DIR`/`PI_CODING_AGENT_DIR`; the `.cmd` shims delegate to the same scripts, so Windows is covered too.
+8. **P1** ✅ VSIX now contains only: `package.json`, `readme.md`, `LICENSE.txt`, `resources/` (hook.js, pi-extension.ts, icon.png, svg), `media/`, `dist/extension.js` — verified by unzipping the fresh package.
+9. **P2** ✅ `repository`, `keywords`, 128×128 PNG `icon` (verified with sips), `LICENSE`, `preview: true`, `private` removed, `--allow-missing-repository` dropped.
+10. **A5** ✅ Launcher writes `pending`; capture flips to `running`.
+11. **A6** ✅ `bind()` returns archived records untouched instead of un-archiving; explicit resume still works (Restorer path).
+12. **A7** ✅ `showTerminal` uses the bound terminal reference via `TerminalMonitor.terminalForSession`; name match is fallback only.
+13. **S6** ✅ tree tooltip uses `appendText()` for title/cwd/branch.
+14. **A8** ✅ pi extension spool-dir refactor (no more date-rollover race); the rest was explicitly optional and correctly left.
+
+### New follow-ups (small, non-blocking)
+
+- **F1 — existing storage keeps old permissions.** The 0700/0600 modes only apply to *newly created* dirs/files, and `chmod(storageDir)` runs only inside `HooksInstaller.install()`. A `~/.agent-sessions` created by 0.0.1 (like the owner's, verified: dirs 0755, records 0644) stays world-readable until the user runs Install Agent Hooks. Fix: run the idempotent `chmod(storageDir, 0o700)` (and `sessions/`, `spool/`) once per activation, e.g. in `resolveStorageDir`'s caller or `SessionStore.init()`, wrapped in try/catch.
+- **F2 — `TerminalMonitor.terminalsByKey` never deletes entries.** Closed terminals stay in the map for the window's lifetime (small memory/reference leak; no correctness bug because the correlator clears `terminalSessions` on close, so lookup falls back to the name match). Fix: in the `onDidCloseTerminal` handler, `this.terminalsByKey.delete(this.keyFor(terminal))` alongside the correlator call.
+- Cosmetic: `pruneOldFiles()` runs only at startup, not daily — fine for typical usage; a long-lived window with hooks running for weeks keeps accumulating one file per day in memory offsets only (files are still read incrementally). Optional: also prune on date rollover in `poll()`.
+- Note for Windows users: `shellQuote` is POSIX/PowerShell-style quoting. Safe ids (the normal case) are passed unquoted so cmd.exe is fine; a title with spaces is single-quoted, which PowerShell (the VS Code default) handles correctly, cmd.exe would pass the quotes literally. Acceptable; worth one line in the README if Windows support matters.
+- Ghost `pending` records (launcher ran, agent binary missing) will show as "interrupted" after the next restart and be offered for restore. A future nicety: mark `pending` records older than ~10 minutes with no session file as `missing` during `StartupRestore.run()`.
+
+**Verdict: the security posture is now publishable.** No injection or traversal paths remain that the reviewer could find; the residual items are hygiene, not vulnerabilities.
+
+---
+
+# Original review of v0.0.1 (kept for reference; all items applied)
 
 Review date: after milestone M7, commit `65a34e4` (repo matches `github.com/dbaralt/agent-session-keeper`).
 

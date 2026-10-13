@@ -16,7 +16,7 @@ import { StartupRestore } from './restore/StartupRestore';
 import { StatusBar } from './restore/StatusBar';
 import { WindowHeartbeat } from './restore/heartbeat';
 import { SessionStore } from './store/SessionStore';
-import { resolveStorageDir } from './store/storageDir';
+import { resolveStorageDir, ensureStoragePermissions } from './store/storageDir';
 import { activationMessage } from './util/activation';
 import { HistoryPanel, type HistoryHost } from './ui/HistoryPanel';
 import { SessionCommands, type SessionAction } from './ui/SessionCommands';
@@ -78,6 +78,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   } catch (error) {
     log().error(`could not initialise the session store: ${String(error)}`);
   }
+  await ensureStoragePermissions(storageDir);
 
   const registry = buildRegistry();
   log().info(`agents: ${registry.ids().join(', ')}`);

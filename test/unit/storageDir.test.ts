@@ -1,6 +1,8 @@
+import { mkdir, mkdtemp, rm, stat } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { resolveStorageDir } from '../../src/store/storageDir';
+import { ensureStoragePermissions, resolveStorageDir } from '../../src/store/storageDir';
 
 const home = path.sep === '/' ? '/home/tester' : 'C:\\Users\\tester';
 
@@ -37,5 +39,21 @@ describe('resolveStorageDir', () => {
     expect(resolveStorageDir({ env: {}, settingValue: '~/keeper', home })).toBe(
       path.join(home, 'keeper'),
     );
+  });
+
+  it('upgrades an existing storage tree to owner-only', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'ask-storage-perms-'));
+    try {
+      const subdirs = ['sessions', 'spool', 'windows', 'bin'];
+      for (const dir of [root, ...subdirs.map((name) => path.join(root, name))]) {
+        await mkdir(dir, { recursive: true, mode: 0o755 });
+      }
+      await ensureStoragePermissions(root);
+      for (const dir of [root, ...subdirs.map((name) => path.join(root, name))]) {
+        expect((await stat(dir)).mode & 0o777).toBe(0o700);
+      }
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
