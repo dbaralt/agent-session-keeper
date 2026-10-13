@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { HooksInstaller, addClaudeHooks, removeClaudeHooks } from '../../src/hooks/installer';
+import { HooksInstaller, addClaudeHooks, isHookStorageDirSafe, removeClaudeHooks } from '../../src/hooks/installer';
 
 const repoRoot = process.cwd();
 const tempDirs: string[] = [];
@@ -58,6 +58,17 @@ describe('claude hook merge helpers', () => {
     addClaudeHooks(settings, 'hook.js', '/spool');
     removeClaudeHooks(settings, 'hook.js');
     expect(settings).toEqual({});
+  });
+
+  it('rejects a hook storage dir outside home or inside a workspace', () => {
+    expect(isHookStorageDirSafe('/Users/me/.agent-sessions', '/Users/me', []).ok).toBe(true);
+    expect(isHookStorageDirSafe('/tmp/x', '/Users/me', []).ok).toBe(false);
+    expect(
+      isHookStorageDirSafe('/Users/me/code/repo/storage', '/Users/me', ['/Users/me/code/repo']).ok,
+    ).toBe(false);
+    // An explicit override (sandbox/integration) skips only the home check.
+    expect(isHookStorageDirSafe('/tmp/x', '/Users/me', [], true).ok).toBe(true);
+    expect(isHookStorageDirSafe('/tmp/repo/storage', '/Users/me', ['/tmp/repo'], true).ok).toBe(false);
   });
 });
 

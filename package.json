@@ -203,7 +203,8 @@
         "agentSessions.storageDir": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Where session records, the hook spool and the hook script live. Defaults to `~/.agent-sessions`. The `AGENT_SESSIONS_STORAGE_DIR` environment variable takes precedence when set."
+          "markdownDescription": "Where session records, the hook spool and the hook script live. Defaults to `~/.agent-sessions`. The `AGENT_SESSIONS_STORAGE_DIR` environment variable takes precedence when set.",
+          "scope": "machine"
         },
         "agentSessions.restoreOnStartup": {
           "type": "string",
@@ -213,17 +214,20 @@
             "never"
           ],
           "default": "prompt",
-          "description": "What to do with sessions that were interrupted when VS Code closed."
+          "description": "What to do with sessions that were interrupted when VS Code closed.",
+          "scope": "application"
         },
         "agentSessions.agents.claude.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Capture Claude Code sessions."
+          "description": "Capture Claude Code sessions.",
+          "scope": "application"
         },
         "agentSessions.agents.pi.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Capture pi sessions."
+          "description": "Capture pi sessions.",
+          "scope": "application"
         },
         "agentSessions.agents.claude.commandPatterns": {
           "type": "array",
@@ -233,7 +237,8 @@
           "default": [
             "claude"
           ],
-          "description": "Commands and aliases that start Claude Code."
+          "description": "Commands and aliases that start Claude Code.",
+          "scope": "application"
         },
         "agentSessions.agents.pi.commandPatterns": {
           "type": "array",
@@ -243,32 +248,38 @@
           "default": [
             "pi"
           ],
-          "description": "Commands and aliases that start pi."
+          "description": "Commands and aliases that start pi.",
+          "scope": "application"
         },
         "agentSessions.agents.claude.resumeCommand": {
           "type": "string",
           "default": "claude --resume ${sessionId}",
-          "description": "Template used to resume a Claude Code session. Supports ${sessionId}, ${cwd} and ${title}."
+          "description": "Template used to resume a Claude Code session. Supports ${sessionId}, ${cwd} and ${title}.",
+          "scope": "machine"
         },
         "agentSessions.agents.pi.resumeCommand": {
           "type": "string",
           "default": "pi --session ${sessionId}",
-          "description": "Template used to resume a pi session. Supports ${sessionId}, ${cwd} and ${title}."
+          "description": "Template used to resume a pi session. Supports ${sessionId}, ${cwd} and ${title}.",
+          "scope": "machine"
         },
         "agentSessions.agents.claude.sessionRoot": {
           "type": "string",
           "default": "",
-          "description": "Override the Claude session folder. Empty uses CLAUDE_CONFIG_DIR or ~/.claude."
+          "description": "Override the Claude session folder. Empty uses CLAUDE_CONFIG_DIR or ~/.claude.",
+          "scope": "machine"
         },
         "agentSessions.agents.pi.sessionRoot": {
           "type": "string",
           "default": "",
-          "description": "Override the pi agent folder. Empty uses PI_CODING_AGENT_DIR or ~/.pi/agent."
+          "description": "Override the pi agent folder. Empty uses PI_CODING_AGENT_DIR or ~/.pi/agent.",
+          "scope": "machine"
         },
         "agentSessions.titleFromFirstPrompt": {
           "type": "boolean",
           "default": true,
-          "description": "Use the first prompt as the session title when the agent gives no name. Turn off if prompts may contain secrets."
+          "description": "Use the first prompt as the session title when the agent gives no name. Turn off if prompts may contain secrets.",
+          "scope": "application"
         },
         "agentSessions.terminalLocation": {
           "type": "string",
@@ -277,13 +288,15 @@
             "editor"
           ],
           "default": "panel",
-          "description": "Where resumed terminals open."
+          "description": "Where resumed terminals open.",
+          "scope": "application"
         },
         "agentSessions.spoolRetentionDays": {
           "type": "number",
           "default": 7,
           "minimum": 1,
-          "description": "How many days of hook spool events to keep before pruning them."
+          "description": "How many days of hook spool events to keep before pruning them.",
+          "scope": "application"
         }
       }
     }

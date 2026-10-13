@@ -3,7 +3,7 @@ import { chmod, copyFile, mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { writeFileAtomic, writeJsonAtomic } from '../store/atomicWrite';
 import { withFileLock } from '../store/lock';
-import { expandHome, homeDir } from '../util/paths';
+import { expandHome, homeDir, isUnder } from '../util/paths';
 
 export const HOOK_EVENTS = ['SessionStart', 'UserPromptSubmit', 'Stop'] as const;
 const PI_EXTENSION_FILENAME = 'agent-session-keeper.ts';
@@ -23,6 +23,30 @@ export function stableStringify(value: unknown): string {
     return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
   }
   return JSON.stringify(value) ?? 'null';
+}
+
+/**
+ * A hook storage folder is only safe when it is inside the user's home and not
+ * inside any open workspace (a cloned repo could otherwise plant a hook that
+ * runs in every Claude session).
+ */
+export function isHookStorageDirSafe(
+  storageDir: string,
+  home: string,
+  workspaceFolders: readonly string[],
+  allowOutsideHome = false,
+): { ok: true } | { ok: false; reason: string } {
+  const resolved = path.resolve(storageDir);
+  const homeResolved = path.resolve(home);
+  if (!allowOutsideHome && !isUnder(resolved, homeResolved)) {
+    return { ok: false, reason: `must be inside your home folder (${home})` };
+  }
+  for (const folder of workspaceFolders) {
+    if (isUnder(resolved, path.resolve(folder))) {
+      return { ok: false, reason: 'must not be inside a workspace folder' };
+    }
+  }
+  return { ok: true };
 }
 
 function hookMatches(hook: unknown, hookJsPath: string): boolean {

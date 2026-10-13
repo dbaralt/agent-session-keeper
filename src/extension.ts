@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { hostname } from 'node:os';
+import { homedir, hostname } from 'node:os';
 import path from 'node:path';
 import { createDefaultRegistry, type AgentConfig, type AgentRegistry } from './agents/registry';
 import { Launcher } from './agents/launcher';
@@ -7,7 +7,7 @@ import { Correlator } from './capture/Correlator';
 import { HookSpoolReader } from './capture/HookSpoolReader';
 import { SessionDirWatcher } from './capture/SessionDirWatcher';
 import { TerminalMonitor } from './capture/TerminalMonitor';
-import { HooksInstaller } from './hooks/installer';
+import { HooksInstaller, isHookStorageDirSafe } from './hooks/installer';
 import { importExisting } from './import/importExisting';
 import { initLog, log } from './log';
 import type { SessionRecord } from './model/types';
@@ -215,6 +215,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand('agentSessions.newClaude', () => launcher.launch('claude')),
     vscode.commands.registerCommand('agentSessions.newPi', () => launcher.launch('pi')),
     vscode.commands.registerCommand('agentSessions.installHooks', async () => {
+      const folders = (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath);
+      // An explicit env override (sandbox/integration) is trusted over the home check.
+      const fromEnv = Boolean(process.env.AGENT_SESSIONS_STORAGE_DIR?.trim());
+      const safe = isHookStorageDirSafe(storageDir, homedir(), folders, fromEnv);
+      if (!safe.ok) {
+        void vscode.window.showErrorMessage(
+          `Agent Sessions: cannot install hooks — the storage folder ${safe.reason}.`,
+        );
+        return;
+      }
       await installer.install();
       void vscode.window.showInformationMessage(
         'Agent Sessions: hooks installed. Codex-style trust review may be needed once per agent.',

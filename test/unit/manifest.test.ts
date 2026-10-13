@@ -85,6 +85,23 @@ describe('package.json manifest', () => {
     );
   });
 
+  it('locks every setting out of workspace scope and keeps the sensitive ones user-only', () => {
+    const properties = manifest.contributes.configuration.properties;
+    for (const [key, value] of Object.entries(properties)) {
+      const scope = (value as { scope?: string }).scope;
+      expect(scope, `${key} must declare an explicit scope`).toBeTruthy();
+      expect(['window', 'resource']).not.toContain(scope);
+    }
+    const scopeOf = (key: string) =>
+      (properties[key] as { scope?: string } | undefined)?.scope;
+    expect(scopeOf('agentSessions.storageDir')).toBe('machine');
+    expect(scopeOf('agentSessions.agents.claude.resumeCommand')).toBe('machine');
+    expect(scopeOf('agentSessions.agents.pi.resumeCommand')).toBe('machine');
+    expect(scopeOf('agentSessions.agents.claude.sessionRoot')).toBe('machine');
+    expect(scopeOf('agentSessions.agents.claude.commandPatterns')).toBe('application');
+    expect(scopeOf('agentSessions.agents.claude.enabled')).toBe('application');
+  });
+
   it('provides the required npm scripts', () => {
     for (const script of [
       'build',
