@@ -149,12 +149,15 @@ On any session in the sidebar, try each action:
 
 | Action | Expected |
 | --- | --- |
-| Resume (play icon) | Opens a terminal running the resume command, or focuses the terminal if the session is already running |
-| Rename | New title shows immediately and is still there after **Developer: Reload Window** |
-| Pin | Pinned sessions stay at the top of their group |
-| Copy Resume Command | Clipboard holds the exact command; pasting it into any terminal resumes the session |
-| Show Terminal | Focuses the terminal running that session |
-| Archive | Session disappears from the sidebar; still findable in the history page with the Archived filter |
+| Click the session (or right-click → **Resume Session**) | Opens a terminal running the resume command in the folder recorded for the session (no folder picker), or focuses the terminal if it is already running |
+| Pin (pin icon) / right-click → **Pin / Unpin Session** | Pinned sessions stay at the top of their group |
+| Right-click → **Rename Session** | New title shows immediately and is still there after **Developer: Reload Window** |
+| Right-click → **Copy Resume Command** | Clipboard holds the exact command; pasting it into any terminal resumes the session |
+| Right-click → **Copy Session ID** | Clipboard holds just the session id |
+| Right-click → **Show Terminal** | Focuses the terminal running that session |
+| Right-click → **Open Transcript** | Opens the agent's transcript file |
+| Right-click → **Archive Session** | Session disappears from the sidebar; still findable in the history page with the Archived filter |
+| Right-click → **Delete Record** | Asks to confirm, then removes the record (the agent's own transcript is untouched) |
 
 ### 4.8 History page
 

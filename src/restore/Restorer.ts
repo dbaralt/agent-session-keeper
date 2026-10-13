@@ -52,7 +52,19 @@ export class Restorer {
       return 'missing';
     }
 
-    let cwd = record.cwd;
+    let cwd = record.cwd?.trim() ?? '';
+    if (!cwd || !existsSync(cwd)) {
+      // Prefer the folder recorded inside the transcript, then the workspace.
+      try {
+        const info = await adapter.readSessionFile(transcript);
+        if (info?.cwd && existsSync(info.cwd)) cwd = info.cwd;
+      } catch {
+        // Fall through to the workspace / picker.
+      }
+    }
+    if ((!cwd || !existsSync(cwd)) && record.workspaceFolder && existsSync(record.workspaceFolder)) {
+      cwd = record.workspaceFolder;
+    }
     if (!cwd || !existsSync(cwd)) {
       const picked = await vscode.window.showOpenDialog({
         canSelectFiles: false,

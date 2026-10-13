@@ -189,8 +189,7 @@ describe('Correlator', () => {
     expect(correlator.pendingLaunches()).toHaveLength(1);
   });
 
-  it('binds exactly from a hook event and links a /clear switch', async () => {
-    const { correlator } = await setup();
+  it('binds exactly from a hook event and links a /clear switch', async () => {    const { correlator } = await setup();
     await correlator.onLaunch(launch());
     clock += 500;
 
@@ -222,5 +221,34 @@ describe('Correlator', () => {
       ts: iso(),
     });
     expect(second).toMatchObject({ sessionId: 's2', parentSessionId: 's1' });
+  });
+
+  it('does not resurrect a closed session when its transcript changes', async () => {
+    const { store, correlator } = await setup();
+    await correlator.onLaunch(launch());
+    clock += 500;
+    await correlator.onSessionFile(fileEvent());
+    await correlator.onTerminalEnded('t1');
+    await correlator.onTerminalClosed('t1');
+    expect(store.get('claude', 's1')?.status).toBe('closed');
+
+    // A final write to the transcript after the terminal closed must not set it
+    // back to running.
+    clock += 60_000;
+    await correlator.onSessionFile(
+      fileEvent({ isNew: false, modifiedAtMs: clock, info: { sessionId: 's1', cwd: '/p/api' } }),
+    );
+    expect(store.get('claude', 's1')?.status).toBe('closed');
+  });
+
+  it('keeps the recorded cwd when a resume reports an empty one', async () => {
+    const { store, correlator } = await setup();
+    await correlator.onLaunch(launch());
+    clock += 500;
+    await correlator.onSessionFile(fileEvent({ info: { sessionId: 's1', cwd: '/p/api' } }));
+    expect(store.get('claude', 's1')?.cwd).toBe('/p/api');
+
+    await correlator.onLaunch(launch({ terminalKey: 't2', explicitSessionId: 's1', cwd: '' }));
+    expect(store.get('claude', 's1')?.cwd).toBe('/p/api');
   });
 });

@@ -100,6 +100,12 @@ Sections of `docs/TESTING.md` the owner can run after each milestone:
 - Tests: installer byte-identical round trip, `hook.js` spool output, spool reader, import-once, hook correlation; integration tests for the launcher, install/uninstall, import and a spooled hook event.
 - `npm run package` produces `agent-session-keeper-0.0.1.vsix` (~38 KB, 17 files). Packaging needs `--allow-missing-repository` (no remote) and the README's relative links were made plain because `docs/` is not shipped.
 
+### Post-M7 fixes (owner feedback)
+
+- **A closed session no longer reappears under Running.** `Correlator.touchExisting` now only sets `running` when a terminal is still bound; a final transcript write after the terminal closed keeps the `closed`/`exited` status.
+- **Resume no longer asks for a folder on every reopen.** `Correlator.bind` never overwrites a known `cwd` with an empty launch cwd, and `Restorer.resume` falls back to the cwd recorded in the transcript, then the workspace folder, before ever prompting. The resolved folder is persisted on the record, so the location and session id survive any number of close/reopen cycles.
+- **Sidebar buttons**: Resume (green play) and Rename inline buttons removed; Resume is now click-the-session or right-click, Rename is right-click, Pin/Unpin is a pin icon. Added right-click **Copy Session ID**.
+
 ## Decisions
 
 ### D1 — Runtime vs. session recordings

@@ -58,8 +58,7 @@
       },
       {
         "command": "agentSessions.resume",
-        "title": "Resume Session",
-        "icon": "$(debug-start)"
+        "title": "Resume Session"
       },
       {
         "command": "agentSessions.restoreInterrupted",
@@ -79,7 +78,8 @@
       },
       {
         "command": "agentSessions.togglePin",
-        "title": "Pin / Unpin Session"
+        "title": "Pin / Unpin Session",
+        "icon": "$(pin)"
       },
       {
         "command": "agentSessions.archive",
@@ -96,6 +96,10 @@
       {
         "command": "agentSessions.copyResumeCommand",
         "title": "Copy Resume Command"
+      },
+      {
+        "command": "agentSessions.copySessionId",
+        "title": "Copy Session ID"
       },
       {
         "command": "agentSessions.openTranscript",
@@ -134,44 +138,49 @@
       ],
       "view/item/context": [
         {
-          "command": "agentSessions.resume",
+          "command": "agentSessions.togglePin",
           "when": "view == agentSessions.tree && viewItem == session",
           "group": "inline@1"
         },
         {
-          "command": "agentSessions.rename",
-          "when": "view == agentSessions.tree && viewItem == session",
-          "group": "inline@2"
-        },
-        {
-          "command": "agentSessions.togglePin",
-          "when": "view == agentSessions.tree && viewItem == session",
-          "group": "inline@3"
-        },
-        {
-          "command": "agentSessions.copyResumeCommand",
+          "command": "agentSessions.resume",
           "when": "view == agentSessions.tree && viewItem == session",
           "group": "1_session@1"
         },
         {
-          "command": "agentSessions.openTranscript",
+          "command": "agentSessions.copyResumeCommand",
           "when": "view == agentSessions.tree && viewItem == session",
           "group": "1_session@2"
         },
         {
-          "command": "agentSessions.showTerminal",
+          "command": "agentSessions.copySessionId",
           "when": "view == agentSessions.tree && viewItem == session",
           "group": "1_session@3"
         },
         {
-          "command": "agentSessions.archive",
+          "command": "agentSessions.showTerminal",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "1_session@4"
+        },
+        {
+          "command": "agentSessions.openTranscript",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "1_session@5"
+        },
+        {
+          "command": "agentSessions.rename",
           "when": "view == agentSessions.tree && viewItem == session",
           "group": "2_manage@1"
         },
         {
-          "command": "agentSessions.deleteRecord",
+          "command": "agentSessions.archive",
           "when": "view == agentSessions.tree && viewItem == session",
           "group": "2_manage@2"
+        },
+        {
+          "command": "agentSessions.deleteRecord",
+          "when": "view == agentSessions.tree && viewItem == session",
+          "group": "2_manage@3"
         }
       ]
     },

@@ -86,6 +86,15 @@ suite('Agent Session Keeper UI', () => {
     assert.strictEqual(clipboard, 'claude --resume ui-copy');
   });
 
+  test('copies the session id to the clipboard', async () => {
+    const record = makeRecord({ sessionId: 'ui-session-id', title: 'ID me' });
+    writeRecord(record);
+
+    await vscode.commands.executeCommand('agentSessions.copySessionId', record);
+    const clipboard = await vscode.env.clipboard.readText();
+    assert.strictEqual(clipboard, 'ui-session-id');
+  });
+
   test('opens the transcript file', async () => {
     const transcript = path.join(STORAGE, 'transcripts', 'ui-transcript.jsonl');
     fs.mkdirSync(path.dirname(transcript), { recursive: true });

@@ -18,6 +18,7 @@ export type SessionAction =
   | 'togglePin'
   | 'archive'
   | 'copyResumeCommand'
+  | 'copySessionId'
   | 'openTranscript'
   | 'showTerminal'
   | 'deleteRecord';
@@ -55,6 +56,7 @@ export class SessionCommands {
       ['togglePin', (arg) => this.togglePin(arg)],
       ['archive', (arg) => this.archive(arg)],
       ['copyResumeCommand', (arg) => this.copyResumeCommand(arg)],
+      ['copySessionId', (arg) => this.copySessionId(arg)],
       ['openTranscript', (arg) => this.openTranscript(arg)],
       ['showTerminal', (arg) => this.showTerminal(arg)],
       ['deleteRecord', (arg) => this.deleteRecord(arg)],
@@ -90,6 +92,9 @@ export class SessionCommands {
         break;
       case 'copyResumeCommand':
         await this.copy(record);
+        break;
+      case 'copySessionId':
+        await this.copyId(record);
         break;
       case 'openTranscript':
         await this.openTranscriptRecord(record);
@@ -151,6 +156,19 @@ export class SessionCommands {
     const command = adapter.buildResumeCommand(record, this.resumeTemplateFor?.(record.agent));
     await vscode.env.clipboard.writeText(command);
     void vscode.window.showInformationMessage(`Agent Sessions: copied \`${command}\`.`);
+  }
+
+  private async copySessionId(arg?: unknown): Promise<void> {
+    const record = recordFromArg(arg, this.store);
+    if (!record) return;
+    await this.copyId(record);
+  }
+
+  private async copyId(record: SessionRecord): Promise<void> {
+    await vscode.env.clipboard.writeText(record.sessionId);
+    void vscode.window.showInformationMessage(
+      `Agent Sessions: copied session ID \`${record.sessionId}\`.`,
+    );
   }
 
   private async openTranscript(arg?: unknown): Promise<void> {

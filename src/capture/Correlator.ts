@@ -259,9 +259,11 @@ export class Correlator {
     const { agent, sessionId, cwd, launch, confidence, terminalKey, info, filePath } = params;
     const existing = this.store.get(agent, sessionId);
     const nowIso = new Date(this.now()).toISOString();
-    const workspace = this.workspaceFolderFor?.(cwd);
+    // Never lose a known folder: launch cwd, then the session file, then stored.
+    const effectiveCwd = (cwd || info?.cwd || existing?.cwd || '').trim();
+    const workspace = this.workspaceFolderFor?.(effectiveCwd);
     const adapter = this.registry.get(agent);
-    const folderName = cwd ? path.basename(cwd) : 'unknown';
+    const folderName = effectiveCwd ? path.basename(effectiveCwd) : 'unknown';
     const { title, titleSource } = this.resolveTitle(
       existing,
       launch,
@@ -277,7 +279,7 @@ export class Correlator {
       sessionId,
       title,
       titleSource,
-      cwd,
+      cwd: effectiveCwd,
       createdAt: existing?.createdAt ?? info?.startedAt ?? launch.startedAt ?? nowIso,
       lastActiveAt: nowIso,
       status: 'running',
@@ -327,8 +329,14 @@ export class Correlator {
       lastActiveAt,
       updatedAt: new Date(this.now()).toISOString(),
     };
-    if (existing.status !== 'running') patch.status = 'running';
+    // Only say "running" again if a terminal is actually bound to this session;
+    // otherwise a final transcript write after the terminal closed would keep
+    // resurrecting a finished session.
+    if (this.terminalForSession(key) && existing.status !== 'running') {
+      patch.status = 'running';
+    }
     if (!existing.transcriptPath) patch.transcriptPath = event.filePath;
+    if (!existing.cwd && event.info.cwd) patch.cwd = event.info.cwd;
     const updated = await this.store.update(existing.agent, existing.sessionId, patch);
     this.lastActivityWrite.set(key, this.now());
     return updated ?? existing;
