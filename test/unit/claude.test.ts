@@ -117,8 +117,15 @@ describe('claude session file reader', () => {
   });
 
   it('recognises session files', () => {
-    expect(adapter.isSessionFile('a/b.jsonl')).toBe(true);
-    expect(adapter.isSessionFile('a/b.json')).toBe(false);
+    expect(adapter.isSessionFile(path.join(fixtures, 'projects', '-p-api', 'session.jsonl'))).toBe(true);
+    expect(adapter.isSessionFile(path.join(fixtures, 'projects', '-p-api', 'session.json'))).toBe(false);
+  });
+
+  it('rejects subagent and deep transcripts', () => {
+    const subagent = path.join(fixtures, 'projects', '-p-api', 'main', 'subagents', 'agent-x.jsonl');
+    const deep = path.join(fixtures, 'projects', '-p-api', 'main', 'something.jsonl');
+    expect(adapter.isSessionFile(subagent)).toBe(false);
+    expect(adapter.isSessionFile(deep)).toBe(false);
   });
 
   it('resolves the transcript path from the record', async () => {

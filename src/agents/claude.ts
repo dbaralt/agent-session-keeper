@@ -116,7 +116,14 @@ export function createClaudeAdapter(options: ClaudeAdapterOptions = {}): AgentAd
     },
 
     isSessionFile(filePath: string): boolean {
-      return filePath.endsWith('.jsonl');
+      if (!filePath.endsWith('.jsonl')) return false;
+      // Only `projects/<project>/<session-id>.jsonl` is a real Claude session.
+      // Task-tool subagents live in `projects/<project>/<id>/subagents/…` and
+      // must not be treated as sessions.
+      const projects = projectsDir(options);
+      const rel = path.relative(projects, filePath);
+      if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) return false;
+      return rel.split(path.sep).length === 2;
     },
 
     async readSessionFile(filePath: string): Promise<SessionFileInfo | undefined> {
