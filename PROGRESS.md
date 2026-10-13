@@ -135,6 +135,10 @@ Left as-is per the review's "explicitly not problems" list: mkdir-lock design, g
 - Spool pruning now also runs when the date rolls over in a long-lived window (not only at startup).
 - README notes that PowerShell is the safe default on Windows for quoted titles.
 
+### Second review (REVIEW-2.md)
+
+All 10 fix-list items applied, one commit each (`R2-1`…`R2-10`): exec-form Claude hooks with an explicit spool dir, spool path templated into the pi extension, user-scoped settings + hook-storage guard, `bind` split into `create`/`attach`, subagent transcripts ignored, resume focuses a running session, single-window ownership + compare-and-set restore claim, terminals re-linked after reload, resume-by-name/path as a pending resume, and small hardening (plain-text titles, store-only lookups, transcript root check, heartbeat pid, settings re-read).
+
 ## Decisions
 
 ### D1 — Runtime vs. session recordings
@@ -220,6 +224,13 @@ later with minimal work:
 
 Only claude and pi are verified against the real binaries here; Codex is not
 installed on this machine.
+
+### D5 — Decisions from the second review (REVIEW-2.md)
+
+- **Hook storage guard (item 3).** `isHookStorageDirSafe` skips the "inside home" check when `AGENT_SESSIONS_STORAGE_DIR` is set explicitly (sandbox/integration harness), but always rejects a folder inside an open workspace.
+- **Ownership (item 7).** `detectInterrupted` now returns four lists — `interrupted`, `stillRunning`, `rebound`, `aliveElsewhere` — instead of two; `StartupRestore` rewrites `windowSessionId` only for `rebound`, and a `SessionStore.claimForRestore` compare-and-set prevents two windows restoring the same session.
+- **Settings re-read (item 10).** Only the live `titleFromFirstPrompt` flag is applied on `onDidChangeConfiguration`; structural settings (storage, roots, resume command) still need a window reload, which is logged.
+- **Resume focus (item 6).** `ResumeOutcome` gained `'focused'`; clicking a running session focuses its terminal instead of opening a second agent.
 
 ## Environment notes
 
