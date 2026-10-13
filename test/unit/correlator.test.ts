@@ -272,4 +272,31 @@ describe('Correlator', () => {
     expect(store.get('claude', 's1')?.title).toBe('same prompt');
     expect(store.get('claude', 's2')?.title).toBe('same prompt (2)');
   });
+
+  it('ignores unsafe session ids from hooks, files and command lines', async () => {
+    const { store, correlator } = await setup();
+
+    expect(
+      await correlator.onHookEvent({ agent: 'claude', event: 'SessionStart', session_id: 'x;bad' }),
+    ).toBeUndefined();
+    expect(
+      await correlator.onSessionFile(
+        fileEvent({ info: { sessionId: '../../evil', cwd: '/p/api' } }),
+      ),
+    ).toBeUndefined();
+    expect(
+      await correlator.onLaunch(launch({ explicitSessionId: '$(bad)' })),
+    ).toBeUndefined();
+    expect(store.all()).toHaveLength(0);
+  });
+
+  it('does not re-bind an archived session', async () => {
+    const { store, correlator } = await setup();
+    await correlator.onLaunch(launch({ explicitSessionId: 's1' }));
+    await store.update('claude', 's1', { status: 'archived' });
+
+    const result = await correlator.onLaunch(launch({ terminalKey: 't2', explicitSessionId: 's1' }));
+    expect(result?.status).toBe('archived');
+    expect(store.get('claude', 's1')?.status).toBe('archived');
+  });
 });

@@ -107,6 +107,27 @@ Sections of `docs/TESTING.md` the owner can run after each milestone:
 - **Sidebar buttons**: Resume (green play) and Rename inline buttons removed; Resume is now click-the-session or right-click, Rename is right-click, Pin/Unpin is a pin icon. Added right-click **Copy Session ID**.
 - **Auto-names and unique titles**: sessions without a user/agent name get a fallback name (`pi · folder · HH:MM`), and every title (capture, launcher, rename, import) is deduped against the listed sessions by appending ` (2)`, ` (3)`, … so two sessions never show the same name.
 
+### Review fixes (applied from `REVIEW.md`)
+
+Security and correctness changes after the external architecture/security review:
+
+1. **S1+S2 shell injection / path traversal**: `isSafeSessionId()` rejects ids at capture, hook and resume time; `shellQuote()` single-quotes `${sessionId}`/`${cwd}`/`${title}` in resume templates and names in new-session commands; `transcriptPathFor` validates the id and checks the resolved path stays under the agent root.
+2. **S3 permissions**: storage dirs are `0700`, records/spool/heartbeat files `0600`; the installer `chmod`s the storage dir, `bin/` and `hook.js`.
+3. **A3 atomic settings.json**: `HooksInstaller` writes `~/.claude/settings.json` with `writeJsonAtomic` under `withFileLock`.
+4. **A1 multi-window heartbeat**: each window writes `windows/<sessionId>.json`; `detectInterrupted` treats records whose window heartbeat is fresh as still running.
+5. **A4 unhandled rejections**: every fire-and-forget event callback and `startup.run()` now catches and logs errors.
+6. **A2 spool retention + incremental reads**: new `agentSessions.spoolRetentionDays` (default 7); `HookSpoolReader` prunes old files and reads incrementally from per-file offsets instead of the whole file.
+7. **S4 fake-agent safety**: `test/bin/claude` and `test/bin/pi` refuse to run without their config env vars.
+8. **P1 packaging**: `.vscodeignore` excludes `tsconfig.json`, `esbuild.mjs`, `vitest.config.ts`, `PROGRESS.md`, `AGENTS.md`, `CLAUDE.md`, `START_HERE.md`, `REVIEW.md`.
+9. **P2 manifest/repo**: added `repository`, `keywords`, `icon` (128×128 PNG), `LICENSE`, `preview: true`, removed `private: true` and `--allow-missing-repository`.
+10. **A5 launcher**: a launcher now writes `pending` and capture flips it to `running`.
+11. **A6 archived**: `Correlator.bind` skips archived records instead of silently un-archiving them.
+12. **A7 exact terminal lookup**: `showTerminal` uses the bound terminal reference; the name match is only a fallback.
+13. **S6 tooltip**: tree tooltips build untrusted title/cwd with `appendText()`.
+14. **A8 partial**: pi extension spool-dir refactor done; the mkdir lock's atomicity already prevents double-acquire (noted, no change); a degraded-store mode was left out as optional.
+
+Left as-is per the review's "explicitly not problems" list: mkdir-lock design, global `~/.agent-sessions`, JSON-per-record, polling spool reader (beyond item 6), no Codex support.
+
 ## Decisions
 
 ### D1 — Runtime vs. session recordings

@@ -37,6 +37,7 @@ export function detectInterrupted(
   records: readonly SessionRecord[],
   currentWindowSessionId: string,
   liveTerminals: readonly LiveTerminal[],
+  freshWindowIds: ReadonlySet<string> = new Set(),
 ): InterruptedDetection {
   const interrupted: SessionRecord[] = [];
   const stillRunning: SessionRecord[] = [];
@@ -44,6 +45,12 @@ export function detectInterrupted(
   for (const record of records) {
     if (record.status !== 'running' && record.status !== 'pending') continue;
     if (record.launch.windowSessionId === currentWindowSessionId) {
+      stillRunning.push(record);
+      continue;
+    }
+    // A fresh heartbeat means that window is still alive, even if this window
+    // cannot see its terminals.
+    if (record.launch.windowSessionId && freshWindowIds.has(record.launch.windowSessionId)) {
       stillRunning.push(record);
       continue;
     }

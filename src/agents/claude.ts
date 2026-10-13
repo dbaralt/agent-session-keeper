@@ -2,7 +2,9 @@ import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { SessionFileInfo, SessionRecord } from '../model/types';
-import { expandHome, homeDir, pathsEqual } from '../util/paths';
+import { isSafeSessionId } from '../model/types';
+import { expandHome, homeDir, isUnder, pathsEqual } from '../util/paths';
+import { shellQuote } from '../util/shellQuote';
 import {
   applyResumeTemplate,
   type AgentAdapter,
@@ -163,23 +165,24 @@ export function createClaudeAdapter(options: ClaudeAdapterOptions = {}): AgentAd
     },
 
     async transcriptPathFor(record: SessionRecord): Promise<string | undefined> {
+      if (!isSafeSessionId(record.sessionId)) return undefined;
       if (record.transcriptPath && existsSync(record.transcriptPath)) return record.transcriptPath;
 
       const projects = projectsDir(options);
       const direct = path.join(projects, encodeProjectDir(record.cwd), `${record.sessionId}.jsonl`);
-      if (existsSync(direct)) return direct;
+      if (isUnder(direct, projects) && existsSync(direct)) return direct;
 
       for (const entry of await safeReaddir(projects)) {
         const candidate = path.join(projects, entry, `${record.sessionId}.jsonl`);
-        if (existsSync(candidate)) return candidate;
+        if (isUnder(candidate, projects) && existsSync(candidate)) return candidate;
       }
       return undefined;
     },
 
     buildNewCommand({ sessionId, name }: NewSessionOptions): string {
       let command = 'claude';
-      if (sessionId) command += ` --session-id ${sessionId}`;
-      if (name) command += ` --name ${JSON.stringify(name)}`;
+      if (sessionId) command += ` --session-id ${shellQuote(sessionId)}`;
+      if (name) command += ` --name ${shellQuote(name)}`;
       return command;
     },
 

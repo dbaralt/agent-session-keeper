@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { SessionRecord } from '../model/types';
 import type { SessionStore, StoreLogger } from '../store/SessionStore';
+import { readFreshWindows } from './heartbeat';
 import { detectInterrupted, type LiveTerminal } from './interrupted';
 import type { Restorer } from './Restorer';
 import type { StatusBar } from './StatusBar';
@@ -9,6 +10,7 @@ export interface StartupRestoreOptions {
   store: SessionStore;
   restorer: Restorer;
   statusBar: StatusBar;
+  storageDir: string;
   setting: 'prompt' | 'always' | 'never';
   logger?: StoreLogger;
 }
@@ -18,6 +20,7 @@ export class StartupRestore {
   private readonly store: SessionStore;
   private readonly restorer: Restorer;
   private readonly statusBar: StatusBar;
+  private readonly storageDir: string;
   private readonly setting: 'prompt' | 'always' | 'never';
   private readonly logger: StoreLogger | undefined;
 
@@ -25,6 +28,7 @@ export class StartupRestore {
     this.store = options.store;
     this.restorer = options.restorer;
     this.statusBar = options.statusBar;
+    this.storageDir = options.storageDir;
     this.setting = options.setting;
     this.logger = options.logger;
   }
@@ -32,10 +36,12 @@ export class StartupRestore {
   async run(): Promise<void> {
     const records = this.store.all();
     const liveTerminals = await this.liveTerminals();
+    const freshWindows = await readFreshWindows(this.storageDir);
     const { interrupted, stillRunning } = detectInterrupted(
       records,
       vscode.env.sessionId,
       liveTerminals,
+      freshWindows,
     );
 
     for (const record of stillRunning) {

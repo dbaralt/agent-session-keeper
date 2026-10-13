@@ -11,10 +11,14 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-function spoolFile(): string {
+function spoolDir(): string {
   const base = process.env.AGENT_SESSIONS_STORAGE_DIR || join(homedir(), ".agent-sessions");
+  return join(base, "spool");
+}
+
+function spoolFile(): string {
   const date = new Date().toISOString().slice(0, 10);
-  return join(base, "spool", `events-${date}.jsonl`);
+  return join(spoolDir(), `events-${date}.jsonl`);
 }
 
 function ancestorPids(): number[] {
@@ -51,7 +55,7 @@ function report(
       terminalId: process.env.AGENT_SESSIONS_TERMINAL_ID || undefined,
       ancestorPids: ancestorPids(),
     });
-    mkdirSync(join(spoolFile(), ".."), { recursive: true });
+    mkdirSync(spoolDir(), { recursive: true });
     appendFileSync(spoolFile(), `${line}\n`);
   } catch {
     // Never disturb the session.

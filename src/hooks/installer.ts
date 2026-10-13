@@ -1,6 +1,8 @@
 import { existsSync } from 'node:fs';
-import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
+import { writeFileAtomic, writeJsonAtomic } from '../store/atomicWrite';
+import { withFileLock } from '../store/lock';
 import { expandHome, homeDir } from '../util/paths';
 
 export const HOOK_EVENTS = ['SessionStart', 'UserPromptSubmit', 'Stop'] as const;
@@ -124,8 +126,11 @@ export class HooksInstaller {
   }
 
   async install(): Promise<void> {
-    await mkdir(path.dirname(this.hookJsPath), { recursive: true });
+    await mkdir(path.dirname(this.hookJsPath), { recursive: true, mode: 0o700 });
     await copyFile(this.hookSourcePath, this.hookJsPath);
+    await chmod(this.hookJsPath, 0o755);
+    // The storage dir may predate this version; make it owner-only.
+    await chmod(this.storageDir, 0o700).catch(() => undefined);
     await this.installClaudeHooks();
     await this.installPiExtension();
     this.logger?.info('installed agent hooks');
@@ -152,47 +157,53 @@ export class HooksInstaller {
   }
 
   private async installClaudeHooks(): Promise<void> {
-    const backupPath = `${this.settingsPath}${BACKUP_SUFFIX}`;
-    let original: string | undefined;
-    if (existsSync(this.settingsPath)) {
-      original = await readFile(this.settingsPath, 'utf8');
-      if (!existsSync(backupPath)) await writeFile(backupPath, original, 'utf8');
-    }
-    const settings = original ? (JSON.parse(original) as Json) : {};
-    addClaudeHooks(settings, this.hookJsPath);
-    await mkdir(path.dirname(this.settingsPath), { recursive: true });
-    await writeFile(this.settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
+    const settingsPath = this.settingsPath;
+    await withFileLock(`${settingsPath}.lock`, async () => {
+      const backupPath = `${settingsPath}${BACKUP_SUFFIX}`;
+      let original: string | undefined;
+      if (existsSync(settingsPath)) {
+        original = await readFile(settingsPath, 'utf8');
+        if (!existsSync(backupPath)) await writeFileAtomic(backupPath, original);
+      }
+      const settings = original ? (JSON.parse(original) as Json) : {};
+      addClaudeHooks(settings, this.hookJsPath);
+      await writeJsonAtomic(settingsPath, settings);
+    });
   }
 
   private async uninstallClaudeHooks(): Promise<void> {
     if (!existsSync(this.settingsPath)) return;
-    const backupPath = `${this.settingsPath}${BACKUP_SUFFIX}`;
-    const current = await readFile(this.settingsPath, 'utf8');
-    const settings = JSON.parse(current) as Json;
-    removeClaudeHooks(settings, this.hookJsPath);
+    const settingsPath = this.settingsPath;
+    await withFileLock(`${settingsPath}.lock`, async () => {
+      const backupPath = `${settingsPath}${BACKUP_SUFFIX}`;
+      const current = await readFile(settingsPath, 'utf8');
+      const settings = JSON.parse(current) as Json;
+      removeClaudeHooks(settings, this.hookJsPath);
 
-    if (existsSync(backupPath)) {
-      const backup = await readFile(backupPath, 'utf8');
-      // If removing our entries restores the original content, restore its exact
-      // bytes so install + uninstall is byte-identical.
-      if (stableStringify(settings) === stableStringify(JSON.parse(backup))) {
-        await writeFile(this.settingsPath, backup, 'utf8');
-      } else {
-        await writeFile(this.settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
+      if (existsSync(backupPath)) {
+        const backup = await readFile(backupPath, 'utf8');
+        // If removing our entries restores the original content, restore its exact
+        // bytes so install + uninstall is byte-identical.
+        if (stableStringify(settings) === stableStringify(JSON.parse(backup))) {
+          await writeFileAtomic(settingsPath, backup);
+        } else {
+          await writeJsonAtomic(settingsPath, settings);
+        }
+        await rm(backupPath, { force: true });
+        return;
       }
-      await rm(backupPath, { force: true });
-      return;
-    }
 
-    if (Object.keys(settings).length === 0) {
-      await rm(this.settingsPath, { force: true });
-    } else {
-      await writeFile(this.settingsPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
-    }
+      if (Object.keys(settings).length === 0) {
+        await rm(settingsPath, { force: true });
+      } else {
+        await writeJsonAtomic(settingsPath, settings);
+      }
+    });
   }
 
   private async installPiExtension(): Promise<void> {
-    await mkdir(path.dirname(this.piExtensionPath), { recursive: true });
+    await mkdir(path.dirname(this.piExtensionPath), { recursive: true, mode: 0o700 });
     await copyFile(this.piExtensionSourcePath, this.piExtensionPath);
+    await chmod(this.piExtensionPath, 0o644);
   }
 }

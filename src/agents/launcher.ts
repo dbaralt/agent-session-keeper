@@ -70,7 +70,7 @@ export class Launcher {
         cwd,
         createdAt: now,
         lastActiveAt: now,
-        status: 'running',
+        status: 'pending',
         bindingConfidence: 'exact',
         launch: { commandLine: command, via: 'launcher', windowSessionId: this.windowSessionId },
         machine: this.machine,

@@ -25,7 +25,11 @@ function parseArgs(argv) {
 
 const args = parseArgs(process.argv.slice(2));
 const cwd = process.cwd();
-const configDir = process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+if (!process.env.CLAUDE_CONFIG_DIR) {
+  console.error('fake claude refuses to run without CLAUDE_CONFIG_DIR pointing at a throwaway folder');
+  process.exit(1);
+}
+const configDir = process.env.CLAUDE_CONFIG_DIR;
 const projectDir = path.join(configDir, 'projects', cwd.replace(/[^A-Za-z0-9]/g, '-'));
 let sessionId = args.sessionId || args.resume || randomUUID();
 

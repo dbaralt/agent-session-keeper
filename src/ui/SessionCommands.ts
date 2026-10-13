@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import type { AgentRegistry } from '../agents/registry';
-import { sessionKey, type SessionRecord } from '../model/types';
+import { isSafeSessionId, sessionKey, type SessionRecord } from '../model/types';
 import { uniquifyTitle } from '../model/titles';
 import type { Restorer } from '../restore/Restorer';
 import type { SessionStore } from '../store/SessionStore';
@@ -11,6 +11,8 @@ export interface SessionCommandsOptions {
   restorer: Restorer;
   resumeTemplateFor?: (agent: string) => string | undefined;
   refresh: () => void;
+  /** Exact terminal lookup by session key; the name match is the fallback. */
+  findTerminal?: (sessionKey: string) => vscode.Terminal | undefined;
 }
 
 export type SessionAction =
@@ -42,6 +44,7 @@ export class SessionCommands {
   private readonly restorer: Restorer;
   private readonly resumeTemplateFor: ((agent: string) => string | undefined) | undefined;
   private readonly refresh: () => void;
+  private readonly findTerminal: ((sessionKey: string) => vscode.Terminal | undefined) | undefined;
 
   constructor(options: SessionCommandsOptions) {
     this.store = options.store;
@@ -49,6 +52,7 @@ export class SessionCommands {
     this.restorer = options.restorer;
     this.resumeTemplateFor = options.resumeTemplateFor;
     this.refresh = options.refresh;
+    this.findTerminal = options.findTerminal;
   }
 
   register(context: vscode.ExtensionContext): void {
@@ -153,6 +157,12 @@ export class SessionCommands {
   }
 
   private async copy(record: SessionRecord): Promise<void> {
+    if (!isSafeSessionId(record.sessionId)) {
+      void vscode.window.showWarningMessage(
+        `Agent Sessions: the session id for "${record.title}" is not safe to copy as a command.`,
+      );
+      return;
+    }
     const adapter = this.registry.get(record.agent);
     if (!adapter) return;
     const command = adapter.buildResumeCommand(record, this.resumeTemplateFor?.(record.agent));
@@ -199,6 +209,11 @@ export class SessionCommands {
   }
 
   private showTerminalRecord(record: SessionRecord): void {
+    const exact = this.findTerminal?.(sessionKey(record.agent, record.sessionId));
+    if (exact) {
+      exact.show();
+      return;
+    }
     const terminal = vscode.window.terminals.find((candidate) =>
       candidate.name.includes(record.title),
     );

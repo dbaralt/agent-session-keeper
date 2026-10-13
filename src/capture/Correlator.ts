@@ -2,6 +2,7 @@ import path from 'node:path';
 import type { AgentAdapter } from '../agents/AgentAdapter';
 import type { AgentRegistry } from '../agents/registry';
 import {
+  isSafeSessionId,
   parseSessionKey,
   sessionKey,
   SESSION_SCHEMA_VERSION,
@@ -101,6 +102,10 @@ export class Correlator {
     const adapter = this.registry.get(event.agent);
     const sessionId = event.session_id;
     if (!adapter || !sessionId) return undefined;
+    if (!isSafeSessionId(sessionId)) {
+      this.logger?.warn(`ignoring unsafe session id from hook: ${sessionId}`);
+      return undefined;
+    }
 
     const cwd = event.cwd ?? '';
     const filePath = event.transcript_path ?? '';
@@ -144,6 +149,10 @@ export class Correlator {
   async onLaunch(launch: PendingLaunch): Promise<SessionRecord | undefined> {
     this.prunePending();
     if (launch.explicitSessionId) {
+      if (!isSafeSessionId(launch.explicitSessionId)) {
+        this.logger?.warn(`ignoring unsafe session id from command line: ${launch.explicitSessionId}`);
+        return undefined;
+      }
       return this.bind({
         agent: launch.agent,
         sessionId: launch.explicitSessionId,
@@ -161,6 +170,10 @@ export class Correlator {
   async onSessionFile(event: SessionFileEvent): Promise<SessionRecord | undefined> {
     const adapter = this.registry.get(event.agent);
     if (!adapter) return undefined;
+    if (!isSafeSessionId(event.info.sessionId)) {
+      this.logger?.warn(`ignoring unsafe session id from session file: ${event.info.sessionId}`);
+      return undefined;
+    }
 
     const match = this.takePendingFor(event);
     if (match) {
@@ -260,6 +273,11 @@ export class Correlator {
     const { agent, sessionId, cwd, launch, confidence, terminalKey, info, filePath } = params;
     const existing = this.store.get(agent, sessionId);
     const nowIso = new Date(this.now()).toISOString();
+    // Archived sessions stay hidden unless the user explicitly resumes them.
+    if (existing?.status === 'archived') {
+      this.logger?.info(`not re-binding archived session ${agent}/${sessionId}`);
+      return existing;
+    }
     // Never lose a known folder: launch cwd, then the session file, then stored.
     const effectiveCwd = (cwd || info?.cwd || existing?.cwd || '').trim();
     const workspace = this.workspaceFolderFor?.(effectiveCwd);
@@ -402,7 +420,8 @@ export class Correlator {
     return undefined;
   }
 
-  private terminalForSession(key: string): string | undefined {
+  /** The terminal key bound to a session, for exact terminal lookup. */
+  terminalForSession(key: string): string | undefined {
     for (const [terminalKey, sessionKeyValue] of this.terminalSessions) {
       if (sessionKeyValue === key) return terminalKey;
     }

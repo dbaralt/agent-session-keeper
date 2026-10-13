@@ -1,4 +1,5 @@
 import type { AgentId, SessionFileInfo, SessionRecord } from '../model/types';
+import { shellQuote } from '../util/shellQuote';
 
 export interface CommandMatch {
   /** False for one-shot runs such as `-p`/`--print`, `mcp`, `login`, `install`. */
@@ -39,10 +40,10 @@ export interface AgentAdapter {
   buildResumeCommand(record: SessionRecord, template?: string): string;
 }
 
-/** Replace the `${sessionId}`, `${cwd}` and `${title}` placeholders. */
+/** Replace the `${sessionId}`, `${cwd}` and `${title}` placeholders, shell-quoted. */
 export function applyResumeTemplate(template: string, record: SessionRecord): string {
   return template
-    .replaceAll('${sessionId}', record.sessionId)
-    .replaceAll('${cwd}', record.cwd)
-    .replaceAll('${title}', record.title);
+    .replaceAll('${sessionId}', shellQuote(record.sessionId))
+    .replaceAll('${cwd}', shellQuote(record.cwd))
+    .replaceAll('${title}', shellQuote(record.title));
 }

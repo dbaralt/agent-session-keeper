@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -136,6 +136,17 @@ describe('SessionStore', () => {
 
     const files = await readdir(path.join(store.sessionsDir, 'claude'));
     expect(files.filter((file) => file.endsWith('.tmp'))).toEqual([]);
+  });
+
+  it('creates records and directories owner-only', async () => {
+    const store = await makeStore();
+    await store.init();
+    await store.upsert(makeRecord({ sessionId: 'abc' }));
+
+    const fileStat = await stat(path.join(store.sessionsDir, 'claude', 'abc.json'));
+    const dirStat = await stat(store.sessionsDir);
+    expect(fileStat.mode & 0o777).toBe(0o600);
+    expect(dirStat.mode & 0o777).toBe(0o700);
   });
 
   it('notifies a second window when a record changes', async () => {

@@ -113,16 +113,23 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<TreeElement>
   }
 
   private tooltip(record: SessionRecord): vscode.MarkdownString {
-    const lines = [
-      `**${record.title}**`,
-      '',
-      `Agent: ${record.agent}`,
-      `Status: ${record.status}`,
-      `Folder: \`${record.cwd}\``,
+    const md = new vscode.MarkdownString();
+    md.appendMarkdown('**');
+    md.appendText(record.title);
+    md.appendMarkdown('**\n\n');
+    const rows: [string, string][] = [
+      ['Agent', record.agent],
+      ['Status', record.status],
+      ['Folder', record.cwd],
     ];
-    if (record.gitBranch) lines.push(`Branch: ${record.gitBranch}`);
-    lines.push(`Started: ${record.createdAt}`, `Last active: ${record.lastActiveAt}`);
-    if (record.sessionId) lines.push(`Session: \`${record.sessionId}\``);
-    return new vscode.MarkdownString(lines.join('\n'));
+    if (record.gitBranch) rows.push(['Branch', record.gitBranch]);
+    rows.push(['Started', record.createdAt], ['Last active', record.lastActiveAt]);
+    if (record.sessionId) rows.push(['Session', record.sessionId]);
+    for (const [label, value] of rows) {
+      md.appendMarkdown(`${label}: `);
+      md.appendText(value);
+      md.appendMarkdown('\n');
+    }
+    return md;
   }
 }

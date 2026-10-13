@@ -2,7 +2,9 @@ import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import type { SessionFileInfo, SessionRecord } from '../model/types';
+import { isSafeSessionId } from '../model/types';
 import { expandHome, homeDir, pathsEqual } from '../util/paths';
+import { shellQuote } from '../util/shellQuote';
 import {
   applyResumeTemplate,
   type AgentAdapter,
@@ -172,6 +174,7 @@ export function createPiAdapter(options: PiAdapterOptions = {}): AgentAdapter {
     },
 
     async transcriptPathFor(record: SessionRecord): Promise<string | undefined> {
+      if (!isSafeSessionId(record.sessionId)) return undefined;
       if (record.transcriptPath && existsSync(record.transcriptPath)) return record.transcriptPath;
 
       const root = sessionsDir(options);
@@ -188,8 +191,8 @@ export function createPiAdapter(options: PiAdapterOptions = {}): AgentAdapter {
 
     buildNewCommand({ sessionId, name }: NewSessionOptions): string {
       let command = 'pi';
-      if (sessionId) command += ` --session-id ${sessionId}`;
-      if (name) command += ` --name ${JSON.stringify(name)}`;
+      if (sessionId) command += ` --session-id ${shellQuote(sessionId)}`;
+      if (name) command += ` --name ${shellQuote(name)}`;
       return command;
     },
 

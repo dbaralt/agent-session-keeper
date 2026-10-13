@@ -27,3 +27,13 @@ export function canonicalPath(value: string): string {
 export function pathsEqual(a: string, b: string): boolean {
   return canonicalPath(a) === canonicalPath(b);
 }
+
+/** True if `filePath` is `root` or inside it. */
+export function isUnder(filePath: string, root: string): boolean {
+  const resolvedRoot = path.resolve(root);
+  const resolvedFile = path.resolve(filePath);
+  return (
+    resolvedFile === resolvedRoot ||
+    resolvedFile.startsWith(resolvedRoot.endsWith(path.sep) ? resolvedRoot : `${resolvedRoot}${path.sep}`)
+  );
+}

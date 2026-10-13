@@ -4,8 +4,21 @@
   "description": "Record Claude Code and pi terminal sessions and reopen them after a VS Code restart.",
   "version": "0.0.1",
   "publisher": "danielbaralt",
-  "private": true,
   "license": "MIT",
+  "preview": true,
+  "icon": "resources/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dbaralt/agent-session-keeper"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "pi",
+    "terminal",
+    "sessions",
+    "ai"
+  ],
   "engines": {
     "vscode": "^1.93.0",
     "node": ">=20"
@@ -265,6 +278,12 @@
           ],
           "default": "panel",
           "description": "Where resumed terminals open."
+        },
+        "agentSessions.spoolRetentionDays": {
+          "type": "number",
+          "default": 7,
+          "minimum": 1,
+          "description": "How many days of hook spool events to keep before pruning them."
         }
       }
     }
@@ -277,7 +296,7 @@
     "test": "vitest run",
     "test:integration": "node ./test/integration/run.mjs",
     "sandbox": "node ./scripts/sandbox.mjs",
-    "package": "vsce package --no-dependencies --allow-missing-repository"
+    "package": "vsce package --no-dependencies"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

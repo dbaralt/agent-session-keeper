@@ -1,11 +1,11 @@
 import { existsSync } from 'node:fs';
 import * as vscode from 'vscode';
 import type { AgentRegistry } from '../agents/registry';
-import type { SessionRecord } from '../model/types';
+import { isSafeSessionId, type SessionRecord } from '../model/types';
 import type { SessionStore, StoreLogger } from '../store/SessionStore';
 import { waitForShellIntegration } from './shellIntegration';
 
-export type ResumeOutcome = 'resumed' | 'missing' | 'cancelled' | 'no-adapter';
+export type ResumeOutcome = 'resumed' | 'missing' | 'cancelled' | 'no-adapter' | 'invalid';
 
 export interface RestorerOptions {
   store: SessionStore;
@@ -35,6 +35,12 @@ export class Restorer {
   }
 
   async resume(record: SessionRecord): Promise<ResumeOutcome> {
+    if (!isSafeSessionId(record.sessionId)) {
+      void vscode.window.showWarningMessage(
+        `Agent Sessions: the session id for "${record.title}" is not safe to resume.`,
+      );
+      return 'invalid';
+    }
     const adapter = this.registry.get(record.agent);
     if (!adapter) {
       void vscode.window.showWarningMessage(

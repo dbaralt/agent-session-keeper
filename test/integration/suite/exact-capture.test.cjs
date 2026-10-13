@@ -60,7 +60,7 @@ suite('Agent Session Keeper exact capture', () => {
     const record = await waitFor(() =>
       findRecord('claude', (candidate) => candidate.launch && candidate.launch.via === 'launcher'),
     );
-    assert.strictEqual(record.status, 'running');
+    assert.ok(record.status === 'running' || record.status === 'pending');
     assert.strictEqual(record.bindingConfidence, 'exact');
     assert.ok(record.sessionId);
   });

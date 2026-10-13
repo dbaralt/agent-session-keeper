@@ -143,7 +143,7 @@ describe('claude session file reader', () => {
 describe('claude command builders', () => {
   it('builds a new session command with a preset id and name', () => {
     expect(adapter.buildNewCommand({ sessionId: 'abc', name: 'My Session' })).toBe(
-      'claude --session-id abc --name "My Session"',
+      "claude --session-id abc --name 'My Session'",
     );
     expect(adapter.buildNewCommand({})).toBe('claude');
   });

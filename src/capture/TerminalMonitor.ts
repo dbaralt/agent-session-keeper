@@ -20,6 +20,7 @@ export class TerminalMonitor {
   private readonly correlator: Correlator;
   private readonly logger: StoreLogger | undefined;
   private readonly terminalKeys = new WeakMap<vscode.Terminal, string>();
+  private readonly terminalsByKey = new Map<string, vscode.Terminal>();
   private counter = 0;
 
   constructor(options: TerminalMonitorOptions) {
@@ -31,13 +32,19 @@ export class TerminalMonitor {
   start(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
       vscode.window.onDidStartTerminalShellExecution((event) => {
-        void this.onStart(event);
+        this.onStart(event).catch((error) => {
+          this.logger?.error(`terminal start handling failed: ${String(error)}`);
+        });
       }),
       vscode.window.onDidEndTerminalShellExecution((event) => {
-        void this.correlator.onTerminalEnded(this.keyFor(event.terminal));
+        this.correlator.onTerminalEnded(this.keyFor(event.terminal)).catch((error) => {
+          this.logger?.error(`terminal end handling failed: ${String(error)}`);
+        });
       }),
       vscode.window.onDidCloseTerminal((terminal) => {
-        void this.correlator.onTerminalClosed(this.keyFor(terminal));
+        this.correlator.onTerminalClosed(this.keyFor(terminal)).catch((error) => {
+          this.logger?.error(`terminal close handling failed: ${String(error)}`);
+        });
       }),
     );
   }
@@ -48,11 +55,26 @@ export class TerminalMonitor {
       this.counter += 1;
       key = `t${this.counter}`;
       this.terminalKeys.set(terminal, key);
+      this.terminalsByKey.set(key, terminal);
     }
     return key;
   }
 
+  /** The live terminal currently bound to a session, if any. */
+  terminalForSession(sessionKey: string): vscode.Terminal | undefined {
+    const terminalKey = this.correlator.terminalForSession(sessionKey);
+    return terminalKey ? this.terminalsByKey.get(terminalKey) : undefined;
+  }
+
   private async onStart(event: vscode.TerminalShellExecutionStartEvent): Promise<void> {
+    try {
+      await this.handleStart(event);
+    } catch (error) {
+      this.logger?.error(`terminal start handling failed: ${String(error)}`);
+    }
+  }
+
+  private async handleStart(event: vscode.TerminalShellExecutionStartEvent): Promise<void> {
     const commandLine = event.execution.commandLine.value;
     const resolved = this.registry.resolveCommand(normalizeCommandLine(commandLine));
     if (!resolved || !resolved.match.interactive) return;

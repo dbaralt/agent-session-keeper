@@ -66,4 +66,23 @@ describe('detectInterrupted', () => {
     expect(findLiveTerminal(record, [{ key: 'x', name: 'claude: api' }])).toBeDefined();
     expect(findLiveTerminal(record, [{ key: 'x', name: 'other' }])).toBeUndefined();
   });
+
+  it('keeps a session running when its window heartbeat is fresh', () => {
+    const record = running({
+      sessionId: 's1',
+      launch: { commandLine: 'claude', via: 'shell-integration', windowSessionId: 'window-b' },
+    });
+    const result = detectInterrupted([record], CURRENT, [], new Set(['window-b']));
+    expect(result.interrupted).toEqual([]);
+    expect(result.stillRunning.map((r) => r.sessionId)).toEqual(['s1']);
+  });
+
+  it('interrupts a session whose window heartbeat is gone', () => {
+    const record = running({
+      sessionId: 's1',
+      launch: { commandLine: 'claude', via: 'shell-integration', windowSessionId: 'window-b' },
+    });
+    const result = detectInterrupted([record], CURRENT, []);
+    expect(result.interrupted).toHaveLength(1);
+  });
 });

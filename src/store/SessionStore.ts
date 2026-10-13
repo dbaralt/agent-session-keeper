@@ -96,7 +96,7 @@ export class SessionStore {
 
   /** Create the sessions folder, load what is there and start watching it. */
   async init(): Promise<void> {
-    await mkdir(this.sessionsDir, { recursive: true });
+    await mkdir(this.sessionsDir, { recursive: true, mode: 0o700 });
     await this.loadFromDisk();
     this.startWatcher();
   }

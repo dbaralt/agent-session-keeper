@@ -109,7 +109,7 @@ describe('pi session file reader', () => {
 
   it('builds commands', () => {
     expect(adapter.buildNewCommand({ sessionId: 'abc', name: 'My Session' })).toBe(
-      'pi --session-id abc --name "My Session"',
+      "pi --session-id abc --name 'My Session'",
     );
     expect(
       adapter.buildResumeCommand({ sessionId: 'abc', cwd: '/x', title: 'T' } as never),

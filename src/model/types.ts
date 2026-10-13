@@ -115,6 +115,11 @@ export function isAgentId(value: unknown): value is AgentId {
   );
 }
 
+/** True for agent-style session ids (UUIDs and other file-friendly ids). */
+export function isSafeSessionId(value: string): boolean {
+  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value);
+}
+
 function isStringArrayOf<T extends string>(value: unknown, allowed: readonly T[]): value is T {
   return typeof value === 'string' && (allowed as readonly string[]).includes(value);
 }

@@ -34,7 +34,11 @@ function encodeDir(cwd) {
 
 const args = parseArgs(process.argv.slice(2));
 const cwd = process.cwd();
-const agentDir = process.env.PI_CODING_AGENT_DIR || path.join(os.homedir(), '.pi', 'agent');
+if (!process.env.PI_CODING_AGENT_DIR) {
+  console.error('fake pi refuses to run without PI_CODING_AGENT_DIR pointing at a throwaway folder');
+  process.exit(1);
+}
+const agentDir = process.env.PI_CODING_AGENT_DIR;
 const sessionsDir = process.env.PI_CODING_AGENT_SESSION_DIR || path.join(agentDir, 'sessions');
 const projectDir = path.join(sessionsDir, encodeDir(cwd));
 let sessionId = args.sessionId || args.resume || randomUUID();
