@@ -11,6 +11,7 @@ import {
   type SessionRecord,
   type TitleSource,
 } from '../model/types';
+import { uniquifyTitle } from '../model/titles';
 import type { SessionStore, StoreLogger } from '../store/SessionStore';
 import type { HookEvent, SessionFileEvent } from './events';
 
@@ -272,12 +273,13 @@ export class Correlator {
       folderName,
       nowIso,
     );
+    const uniqueTitle = uniquifyTitle(title, this.store.all(), sessionKey(agent, sessionId));
 
     const record: SessionRecord = {
       schemaVersion: SESSION_SCHEMA_VERSION,
       agent,
       sessionId,
-      title,
+      title: uniqueTitle,
       titleSource,
       cwd: effectiveCwd,
       createdAt: existing?.createdAt ?? info?.startedAt ?? launch.startedAt ?? nowIso,

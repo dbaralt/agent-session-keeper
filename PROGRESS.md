@@ -105,6 +105,7 @@ Sections of `docs/TESTING.md` the owner can run after each milestone:
 - **A closed session no longer reappears under Running.** `Correlator.touchExisting` now only sets `running` when a terminal is still bound; a final transcript write after the terminal closed keeps the `closed`/`exited` status.
 - **Resume no longer asks for a folder on every reopen.** `Correlator.bind` never overwrites a known `cwd` with an empty launch cwd, and `Restorer.resume` falls back to the cwd recorded in the transcript, then the workspace folder, before ever prompting. The resolved folder is persisted on the record, so the location and session id survive any number of close/reopen cycles.
 - **Sidebar buttons**: Resume (green play) and Rename inline buttons removed; Resume is now click-the-session or right-click, Rename is right-click, Pin/Unpin is a pin icon. Added right-click **Copy Session ID**.
+- **Auto-names and unique titles**: sessions without a user/agent name get a fallback name (`pi · folder · HH:MM`), and every title (capture, launcher, rename, import) is deduped against the listed sessions by appending ` (2)`, ` (3)`, … so two sessions never show the same name.
 
 ## Decisions
 

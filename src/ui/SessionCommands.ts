@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { AgentRegistry } from '../agents/registry';
-import type { SessionRecord } from '../model/types';
+import { sessionKey, type SessionRecord } from '../model/types';
+import { uniquifyTitle } from '../model/titles';
 import type { Restorer } from '../restore/Restorer';
 import type { SessionStore } from '../store/SessionStore';
 
@@ -124,8 +125,9 @@ export class SessionCommands {
       value: record.title,
     });
     if (title === undefined || title.trim().length === 0) return;
+    const unique = uniquifyTitle(title.trim(), this.store.all(), sessionKey(record.agent, record.sessionId));
     await this.store.update(record.agent, record.sessionId, {
-      title: title.trim(),
+      title: unique,
       titleSource: 'user',
     });
   }

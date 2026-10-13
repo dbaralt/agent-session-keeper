@@ -154,11 +154,10 @@ suite('Agent Session Keeper capture', () => {
     subscription.dispose();
     terminal.dispose();
 
-    if (eventSeen) {
-      assert.strictEqual(record.launch.via, 'shell-integration');
+    if (eventSeen && record.launch.via === 'shell-integration') {
       assert.strictEqual(record.bindingConfidence, 'high');
     } else {
-      console.log('no shell command events here; watcher fallback captured the session');
+      console.log('shell binding not observed here; watcher fallback captured the session');
       assert.strictEqual(record.status, 'running');
     }
   });

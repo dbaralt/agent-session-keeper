@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import * as vscode from 'vscode';
 import type { AgentRegistry } from '../agents/registry';
 import { SESSION_SCHEMA_VERSION, type SessionRecord } from '../model/types';
+import { fallbackTitle, uniquifyTitle } from '../model/titles';
 import type { SessionStore, StoreLogger } from '../store/SessionStore';
 import { waitForShellIntegration } from '../restore/shellIntegration';
 
@@ -41,11 +42,22 @@ export class Launcher {
     }
 
     const sessionId = adapter.supportsPresetId ? randomUUID() : undefined;
-    const command = adapter.buildNewCommand(
-      sessionId ? (title ? { sessionId, name: title } : { sessionId }) : title ? { name: title } : {},
-    );
     const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? homedir();
     const now = new Date().toISOString();
+    const requested = title?.trim();
+    const sessionTitle = uniquifyTitle(
+      requested ? requested : fallbackTitle(adapter.displayName, cwd),
+      this.store.all(),
+    );
+    const command = adapter.buildNewCommand(
+      sessionId
+        ? requested
+          ? { sessionId, name: sessionTitle }
+          : { sessionId }
+        : requested
+          ? { name: sessionTitle }
+          : {},
+    );
 
     let record: SessionRecord | undefined;
     if (sessionId) {
@@ -53,8 +65,8 @@ export class Launcher {
         schemaVersion: SESSION_SCHEMA_VERSION,
         agent: agentId,
         sessionId,
-        title: title && title.trim() ? title.trim() : `${adapter.displayName} · new`,
-        titleSource: title && title.trim() ? 'agent' : 'fallback',
+        title: sessionTitle,
+        titleSource: requested ? 'user' : 'fallback',
         cwd,
         createdAt: now,
         lastActiveAt: now,
@@ -67,7 +79,7 @@ export class Launcher {
     }
 
     const terminal = vscode.window.createTerminal({
-      name: title && title.trim() ? `${adapter.displayName}: ${title.trim()}` : adapter.displayName,
+      name: requested ? `${adapter.displayName}: ${sessionTitle}` : adapter.displayName,
       cwd,
       env: sessionId ? { AGENT_SESSIONS_TERMINAL_ID: `${agentId}/${sessionId}` } : {},
       location:

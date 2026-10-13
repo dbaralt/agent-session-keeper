@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { AgentAdapter } from '../agents/AgentAdapter';
 import type { AgentRegistry } from '../agents/registry';
 import { SESSION_SCHEMA_VERSION, type SessionRecord, type TitleSource } from '../model/types';
+import { uniquifyTitle } from '../model/titles';
 import type { SessionStore, StoreLogger } from '../store/SessionStore';
 
 export interface ImportExistingOptions {
@@ -64,13 +65,14 @@ export async function importExisting(options: ImportExistingOptions): Promise<nu
         const cwd = info.cwd ?? '';
         const workspace = cwd ? options.workspaceFolderFor?.(cwd) : undefined;
         const { title, titleSource } = chooseTitle(adapter, info);
+        const uniqueTitle = uniquifyTitle(title, store.all());
         const startedAt = info.startedAt ?? new Date(fileStat.birthtimeMs).toISOString();
 
         const record: SessionRecord = {
           schemaVersion: SESSION_SCHEMA_VERSION,
           agent: adapter.id,
           sessionId: info.sessionId,
-          title,
+          title: uniqueTitle,
           titleSource,
           cwd,
           createdAt: startedAt,

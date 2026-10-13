@@ -251,4 +251,25 @@ describe('Correlator', () => {
     await correlator.onLaunch(launch({ terminalKey: 't2', explicitSessionId: 's1', cwd: '' }));
     expect(store.get('claude', 's1')?.cwd).toBe('/p/api');
   });
+
+  it('gives duplicate titles an increasing number', async () => {
+    const { store, correlator } = await setup();
+    await correlator.onLaunch(launch({ terminalKey: 't1' }));
+    clock += 500;
+    await correlator.onSessionFile(
+      fileEvent({ info: { sessionId: 's1', cwd: '/p/api', firstPrompt: 'same prompt' } }),
+    );
+
+    await correlator.onLaunch(launch({ terminalKey: 't2' }));
+    clock += 500;
+    await correlator.onSessionFile(
+      fileEvent({
+        filePath: '/tmp/s2.jsonl',
+        info: { sessionId: 's2', cwd: '/p/api', firstPrompt: 'same prompt' },
+      }),
+    );
+
+    expect(store.get('claude', 's1')?.title).toBe('same prompt');
+    expect(store.get('claude', 's2')?.title).toBe('same prompt (2)');
+  });
 });
