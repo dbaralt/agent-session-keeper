@@ -104,4 +104,15 @@ describe('HooksInstaller', () => {
     await installer.uninstall();
     expect(await installer.status()).toEqual({ claude: false, pi: false });
   });
+
+  it('templates the spool path into the installed pi extension', async () => {
+    const { installer, piAgentDir, storageDir } = await setup();
+    await installer.install();
+    const installed = await readFile(
+      path.join(piAgentDir, 'extensions', 'agent-session-keeper.ts'),
+      'utf8',
+    );
+    expect(installed).toContain(JSON.stringify(path.join(storageDir, 'spool')));
+    expect(installed).not.toContain('__AGENT_SESSIONS_SPOOL_DIR__');
+  });
 });

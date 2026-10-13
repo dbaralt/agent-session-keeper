@@ -7,13 +7,13 @@
  */
 import { execFileSync } from "node:child_process";
 import { appendFileSync, mkdirSync } from "node:fs";
-import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
+const SPOOL_DIR = "__AGENT_SESSIONS_SPOOL_DIR__";
+
 function spoolDir(): string {
-  const base = process.env.AGENT_SESSIONS_STORAGE_DIR || join(homedir(), ".agent-sessions");
-  return join(base, "spool");
+  return SPOOL_DIR;
 }
 
 function spoolFile(): string {

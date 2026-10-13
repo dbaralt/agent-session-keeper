@@ -214,7 +214,11 @@ export class HooksInstaller {
 
   private async installPiExtension(): Promise<void> {
     await mkdir(path.dirname(this.piExtensionPath), { recursive: true, mode: 0o700 });
-    await copyFile(this.piExtensionSourcePath, this.piExtensionPath);
-    await chmod(this.piExtensionPath, 0o644);
+    const source = await readFile(this.piExtensionSourcePath, 'utf8');
+    const templated = source.replaceAll(
+      '"__AGENT_SESSIONS_SPOOL_DIR__"',
+      JSON.stringify(this.spoolDir),
+    );
+    await writeFileAtomic(this.piExtensionPath, templated, { mode: 0o644 });
   }
 }
