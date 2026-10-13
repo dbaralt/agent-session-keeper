@@ -9,6 +9,7 @@ import {
   type BindingConfidence,
   type PendingLaunch,
   type SessionFileInfo,
+  type SessionLaunch,
   type SessionRecord,
   type TitleSource,
 } from '../model/types';
@@ -270,21 +271,27 @@ export class Correlator {
   // --- internals -----------------------------------------------------------
 
   private async bind(params: BindParams): Promise<SessionRecord> {
-    const { agent, sessionId, cwd, launch, confidence, terminalKey, info, filePath } = params;
+    const { agent, sessionId } = params;
     const existing = this.store.get(agent, sessionId);
-    const nowIso = new Date(this.now()).toISOString();
     // Archived sessions stay hidden unless the user explicitly resumes them.
     if (existing?.status === 'archived') {
       this.logger?.info(`not re-binding archived session ${agent}/${sessionId}`);
       return existing;
     }
-    // Never lose a known folder: launch cwd, then the session file, then stored.
-    const effectiveCwd = (cwd || info?.cwd || existing?.cwd || '').trim();
+    return existing ? this.attach(existing, params) : this.create(params);
+  }
+
+  /** New record: build the whole thing. */
+  private async create(params: BindParams): Promise<SessionRecord> {
+    const { agent, sessionId, cwd, launch, confidence, terminalKey, info, filePath } = params;
+    const nowIso = new Date(this.now()).toISOString();
+    // Never lose a known folder: launch cwd, then the session file.
+    const effectiveCwd = (cwd || info?.cwd || '').trim();
     const workspace = this.workspaceFolderFor?.(effectiveCwd);
     const adapter = this.registry.get(agent);
     const folderName = effectiveCwd ? path.basename(effectiveCwd) : 'unknown';
     const { title, titleSource } = this.resolveTitle(
-      existing,
+      undefined,
       launch,
       info,
       adapter?.displayName ?? agent,
@@ -300,7 +307,7 @@ export class Correlator {
       title: uniqueTitle,
       titleSource,
       cwd: effectiveCwd,
-      createdAt: existing?.createdAt ?? info?.startedAt ?? launch.startedAt ?? nowIso,
+      createdAt: info?.startedAt ?? launch.startedAt ?? nowIso,
       lastActiveAt: nowIso,
       status: 'running',
       bindingConfidence: confidence,
@@ -316,21 +323,56 @@ export class Correlator {
     if (workspace?.folder) record.workspaceFolder = workspace.folder;
     if (workspace?.name) record.workspaceName = workspace.name;
     if (info?.gitBranch) record.gitBranch = info.gitBranch;
-    const transcript = filePath ?? existing?.transcriptPath;
-    if (transcript) record.transcriptPath = transcript;
+    if (filePath) record.transcriptPath = filePath;
     if (params.parentSessionId) record.parentSessionId = params.parentSessionId;
-    if (existing?.pinned !== undefined) record.pinned = existing.pinned;
-    if (existing?.notes) record.notes = existing.notes;
     if (launch.shellPid !== undefined) record.launch.shellPid = launch.shellPid;
     if (launch.terminalName) record.launch.terminalName = launch.terminalName;
 
     const saved = await this.store.upsert(record);
+    this.commitBinding(agent, sessionId, terminalKey, confidence, params.parentSessionId);
+    return saved;
+  }
+
+  /**
+   * Existing record: patch only what this event is allowed to change. Never
+   * touch the title, titleSource or launch.commandLine — those were set when
+   * the session was first seen (or by the user).
+   */
+  private async attach(existing: SessionRecord, params: BindParams): Promise<SessionRecord> {
+    const { agent, sessionId, cwd, launch, terminalKey, info, filePath, confidence } = params;
+    const nowIso = new Date(this.now()).toISOString();
+    const effectiveCwd = (cwd || info?.cwd || existing.cwd || '').trim();
+
+    const launchUpdates: Partial<SessionLaunch> = { windowSessionId: this.windowSessionId };
+    if (launch.shellPid !== undefined) launchUpdates.shellPid = launch.shellPid;
+    if (launch.terminalName) launchUpdates.terminalName = launch.terminalName;
+
+    const patch: Partial<SessionRecord> = {
+      status: 'running',
+      lastActiveAt: nowIso,
+      updatedAt: nowIso,
+      launch: { ...existing.launch, ...launchUpdates },
+    };
+    if (!existing.transcriptPath && filePath) patch.transcriptPath = filePath;
+    if (!existing.cwd && effectiveCwd) patch.cwd = effectiveCwd;
+
+    const updated = await this.store.update(agent, sessionId, patch);
+    this.commitBinding(agent, sessionId, terminalKey, confidence, undefined);
+    return updated ?? existing;
+  }
+
+  private commitBinding(
+    agent: string,
+    sessionId: string,
+    terminalKey: string | undefined,
+    confidence: BindingConfidence,
+    parentSessionId: string | undefined,
+  ): void {
     if (terminalKey) this.terminalSessions.set(terminalKey, sessionKey(agent, sessionId));
     this.lastActivityWrite.set(sessionKey(agent, sessionId), this.now());
     this.logger?.info(
-      `bound ${agent}/${sessionId} (${confidence})${params.parentSessionId ? ` from ${params.parentSessionId}` : ''}`,
+      `bound ${agent}/${sessionId} (${confidence})${parentSessionId ? ` from ${parentSessionId}` : ''}`,
     );
-    return saved;
   }
 
   private async touchExisting(
@@ -378,7 +420,8 @@ export class Correlator {
     if (this.titleFromFirstPrompt && info?.firstPrompt) {
       return { title: info.firstPrompt, titleSource: 'firstPrompt' };
     }
-    const time = new Date(nowIso).toISOString().slice(11, 16);
+    const date = new Date(nowIso);
+    const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     return { title: `${displayName} · ${folderName} · ${time}`, titleSource: 'fallback' };
   }
 

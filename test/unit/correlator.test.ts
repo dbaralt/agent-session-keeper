@@ -299,4 +299,35 @@ describe('Correlator', () => {
     expect(result?.status).toBe('archived');
     expect(store.get('claude', 's1')?.status).toBe('archived');
   });
+
+  it('keeps the original title and command line on resume and Stop hooks', async () => {
+    const { store, correlator } = await setup();
+    await correlator.onLaunch(launch({ commandLine: 'claude' }));
+    clock += 500;
+    await correlator.onSessionFile(
+      fileEvent({ info: { sessionId: 's1', cwd: '/p/api', firstPrompt: 'add health check' } }),
+    );
+    expect(store.get('claude', 's1')?.title).toBe('add health check');
+    expect(store.get('claude', 's1')?.launch.commandLine).toBe('claude');
+
+    // Resume: the terminal monitor sees the restorer's own `claude --resume s1`.
+    await correlator.onLaunch(
+      launch({ terminalKey: 't2', explicitSessionId: 's1', commandLine: 'claude --resume s1' }),
+    );
+    expect(store.get('claude', 's1')?.title).toBe('add health check');
+    expect(store.get('claude', 's1')?.launch.commandLine).toBe('claude');
+
+    // A Stop hook must only touch activity, not the title or command line.
+    clock += 1000;
+    await correlator.onHookEvent({
+      agent: 'claude',
+      event: 'Stop',
+      session_id: 's1',
+      cwd: '/p/api',
+      transcript_path: '/tmp/s1.jsonl',
+      ts: iso(),
+    });
+    expect(store.get('claude', 's1')?.title).toBe('add health check');
+    expect(store.get('claude', 's1')?.launch.commandLine).toBe('claude');
+  });
 });
