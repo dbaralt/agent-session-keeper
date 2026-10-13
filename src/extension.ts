@@ -133,6 +133,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     windowSessionId: vscode.env.sessionId,
     terminalLocation: settings().get<'panel' | 'editor'>('terminalLocation') ?? 'panel',
     resumeTemplateFor,
+    findTerminal: (sessionKey) => monitor.terminalForSession(sessionKey),
   });
 
   const treeProvider = new SessionTreeProvider(store, registry);

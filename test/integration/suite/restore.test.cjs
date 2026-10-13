@@ -124,4 +124,45 @@ suite('Agent Session Keeper restore', () => {
     );
     assert.ok(terminal, 'a terminal named after the session should exist');
   });
+
+  test('resume focuses a running session instead of opening another terminal', async function () {
+    this.timeout(40000);
+    const folder = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0];
+    const cwd = folder ? folder.uri.fsPath : process.cwd();
+    const sessionId = 'focus-session';
+    const extension = vscode.extensions.getExtension('danielbaralt.agent-session-keeper');
+    const claudeBin = path.join(extension.extensionPath, 'test', 'bin', 'claude');
+
+    const projectDir = path.join(CLAUDE_ROOT, 'projects', encodeClaudeDir(cwd));
+    fs.mkdirSync(projectDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(projectDir, `${sessionId}.jsonl`),
+      `${JSON.stringify({
+        type: 'user',
+        sessionId,
+        cwd,
+        isMeta: false,
+        timestamp: '2026-01-02T03:00:00.000Z',
+        message: { role: 'user', content: 'focus me' },
+      })}\n`,
+    );
+
+    const terminal = vscode.window.createTerminal({ name: 'focus-test', cwd });
+    terminal.show();
+    await waitFor(async () => (terminal.shellIntegration ? true : undefined), 20000).catch(
+      () => undefined,
+    );
+    if (!terminal.shellIntegration) {
+      console.log('shell integration unavailable here; skipping focus test');
+      terminal.dispose();
+      return;
+    }
+    terminal.shellIntegration.executeCommand(`${claudeBin} --session-id ${sessionId}`);
+
+    const record = await waitFor(() => readRecord('claude', sessionId));
+    const before = vscode.window.terminals.length;
+    await vscode.commands.executeCommand('agentSessions.resume', record);
+    assert.strictEqual(vscode.window.terminals.length, before);
+    terminal.dispose();
+  });
 });

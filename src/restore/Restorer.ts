@@ -1,11 +1,11 @@
 import { existsSync } from 'node:fs';
 import * as vscode from 'vscode';
 import type { AgentRegistry } from '../agents/registry';
-import { isSafeSessionId, type SessionRecord } from '../model/types';
+import { isSafeSessionId, sessionKey, type SessionRecord } from '../model/types';
 import type { SessionStore, StoreLogger } from '../store/SessionStore';
 import { waitForShellIntegration } from './shellIntegration';
 
-export type ResumeOutcome = 'resumed' | 'missing' | 'cancelled' | 'no-adapter' | 'invalid';
+export type ResumeOutcome = 'resumed' | 'missing' | 'cancelled' | 'no-adapter' | 'invalid' | 'focused';
 
 export interface RestorerOptions {
   store: SessionStore;
@@ -14,6 +14,8 @@ export interface RestorerOptions {
   windowSessionId: string;
   terminalLocation: 'panel' | 'editor';
   resumeTemplateFor?: (agent: string) => string | undefined;
+  /** The terminal currently bound to a session, if any (for focus instead of reopen). */
+  findTerminal?: (sessionKey: string) => vscode.Terminal | undefined;
 }
 
 /** Reopens one or many recorded sessions in new terminals. */
@@ -24,6 +26,7 @@ export class Restorer {
   private readonly windowSessionId: string;
   private readonly terminalLocation: 'panel' | 'editor';
   private readonly resumeTemplateFor: ((agent: string) => string | undefined) | undefined;
+  private readonly findTerminal: ((sessionKey: string) => vscode.Terminal | undefined) | undefined;
 
   constructor(options: RestorerOptions) {
     this.store = options.store;
@@ -32,6 +35,7 @@ export class Restorer {
     this.windowSessionId = options.windowSessionId;
     this.terminalLocation = options.terminalLocation;
     this.resumeTemplateFor = options.resumeTemplateFor;
+    this.findTerminal = options.findTerminal;
   }
 
   async resume(record: SessionRecord): Promise<ResumeOutcome> {
@@ -40,6 +44,13 @@ export class Restorer {
         `Agent Sessions: the session id for "${record.title}" is not safe to resume.`,
       );
       return 'invalid';
+    }
+    // If this session is already running in a terminal, just focus it.
+    const liveTerminal = this.findTerminal?.(sessionKey(record.agent, record.sessionId));
+    if (liveTerminal) {
+      liveTerminal.show();
+      this.logger?.info(`focused running session ${record.agent}/${record.sessionId}`);
+      return 'focused';
     }
     const adapter = this.registry.get(record.agent);
     if (!adapter) {
