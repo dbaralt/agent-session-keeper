@@ -77,6 +77,10 @@ Press **F5** for a plain Extension Development Host.
 Adding another agent is one adapter file implementing `AgentAdapter` plus one
 `register(...)` line in `src/agents/registry.ts`; no model, store or UI change.
 
+For maintainers: `docs/CHECKPOINT.md` has the current state and open issues,
+`AGENTS.md` has the full brief and safety rules, and `RELEASE.md` is the publish
+runbook.
+
 ## Notes
 
 - Resume/new-session commands single-quote values that contain spaces or shell

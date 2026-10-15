@@ -4,12 +4,23 @@ You are building **Agent Session Keeper**, a personal VS Code extension. It reco
 
 This folder is the extension's repository. Build the extension here, with `package.json` at the root.
 
+## Current status (read this first)
+
+All seven milestones and both external reviews are done and the extension is
+published as **v0.0.4**. The project is no longer in "build one milestone at a
+time" mode. Before doing anything else, read `docs/CHECKPOINT.md` for the current
+state, the one open issue (History webview renders black on some machines), and
+the ordered next steps. Then read `RELEASE.md` before publishing any release, and
+`PROGRESS.md` for the decisions made so far. Codex was deliberately dropped
+(decision D4); only claude and pi are supported.
+
 ## Read first, in this order
 
-1. `docs/SPEC.md` — the full spec: research, architecture, data model, manifest, module specs, the 7-milestone build plan and the risks. It is the source of truth.
-2. `docs/design/` — HTML mockups of the three main screens. Open them or read their markup for layout, wording, grouping and colours. The extension's real UI uses VS Code's own theme colours and codicons, so match the structure, not the exact hex values.
-3. `docs/TESTING.md` — the manual tests the owner will run. Your work is done when those steps pass, so read it before designing each milestone.
-4. `PROGRESS.md` — the milestone checklist. Keep it up to date.
+1. `docs/CHECKPOINT.md` — current state, open issue, and next steps.
+2. `docs/SPEC.md` — the full spec: research, architecture, data model, manifest, module specs and the build plan. It is the source of truth (Codex parts are superseded by `PROGRESS.md` decision D4).
+3. `docs/design/` — HTML mockups of the three main screens. Open them or read their markup for layout, wording, grouping and colours. The extension's real UI uses VS Code's own theme colours and codicons, so match the structure, not the exact hex values.
+4. `docs/TESTING.md` — the manual tests the owner will run. Your work is done when those steps pass.
+5. `PROGRESS.md` — the milestone checklist and decisions. Keep it up to date.
 
 ## How to work
 
